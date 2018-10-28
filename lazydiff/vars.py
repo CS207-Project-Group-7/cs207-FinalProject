@@ -1,6 +1,6 @@
 import math
 
-class Var:
+class Scalar:
     def __init__(self, val):
         self.val = val
         self._grad_cache = {self: 1}
@@ -23,16 +23,16 @@ class Var:
             self._grad_cache[var] = grad
 
     def __neg__(self):
-        result = Var(-self.val)
+        result = Scalar(-self.val)
         result.parents.append((-1., self))
         return result
     
     def __add__(self, other):
         try:
-            result = Var(self.val + other.val)
+            result = Scalar(self.val + other.val)
             result.parents.append((1., other))
         except AttributeError:
-            result = Var(self.val + other)
+            result = Scalar(self.val + other)
         result.parents.append((1., self))
         return result
 
@@ -47,11 +47,11 @@ class Var:
 
     def __mul__(self, other):
         try:
-            result = Var(self.val * other.val)
+            result = Scalar(self.val * other.val)
             result.parents.append((other.val, self))
             result.parents.append((self.val, other))
         except AttributeError:
-            result = Var(other * self.val)
+            result = Scalar(other * self.val)
             result.parents.append((other, self))
         return result
     
@@ -66,10 +66,26 @@ class Var:
 
     def __pow__(self, other):
         try:
-            result = Var(math.pow(self.val, other.val))
+            result = Scalar(math.pow(self.val, other.val))
             result.parents.append((other.val * math.pow(self.val, other.val - 1), self))
             result.parents.append((math.pow(self.val, other.val) * math.log(self.val), other))
         except AttributeError:
-            result = Var(math.pow(self.val, other))
+            result = Scalar(math.pow(self.val, other))
             result.parents.append((other * math.pow(self.val, other - 1), self))
         return result
+
+class Vector:
+    def __init__(self, *args):
+        self._components = args
+        self.val = tuple([component.val for component in self._components])
+
+    def grad(self, *args):
+        return tuple([component.grad(*args) for component in self._components])
+
+    def __getitem__(self, ind):
+        if ind not in range(self.__len__()):
+            raise IndexError
+        return self._components[ind]
+
+    def __len__(self):
+        return len(self._component)
