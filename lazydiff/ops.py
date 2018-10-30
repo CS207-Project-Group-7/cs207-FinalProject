@@ -52,7 +52,7 @@ def cosh(var):
 
 def tanh(var):
     result = vars.Scalar(math.tanh(var.val))
-    result.parents.append((1 / (math.cosh(var.val)**2), var))
+    result.parents.append((1 / (math.cosh(var.val) ** 2), var))
     return result
 
 def asinh(var):
@@ -62,12 +62,12 @@ def asinh(var):
 
 def acosh(var):
     result = vars.Scalar(math.acosh(var.val))
-    result.parents.append((1 / (math.sqrt(var.val-1) * math.sqrt(var.val+1)), var))
+    result.parents.append((1 / math.sqrt(var.val ** 2 - 1), var))
     return result
 
 def atanh(var):
     result = vars.Scalar(math.atanh(var.val))
-    result.parents.append((1/ (1 - var.val ** 2), var))
+    result.parents.append((1 / (1 - var.val ** 2), var))
     return result
 
 def arcsinh(var):
@@ -84,13 +84,33 @@ def exp(var):
     result.parents.append((math.exp(var.val), var))
     return result
 
-def log(var, base = math.e):
-    result = vars.Scalar(math.log(var.val, base))
-    result.parents.append((1 / (var.val * math.log(base)), var))
+def log(var, base=math.e):
+    try:
+        result = vars.Scalar(math.log(var.val, base.val))
+        result.parents.append((1 / (var.val * math.log(base.val)), var))
+        result.parents.append((-math.log(var.val) / (base.val * math.log(base.val) ** 2), base))
+    except AttributeError:
+        result = vars.Scalar(math.log(var.val, base))
+        result.parents.append((1 / (var.val * math.log(base)), var))
     return result
 
-def power(var, exponent):
-    return var**exponent
+def neg(var):
+    return -var
+
+def add(var1, var2):
+    return var1 + var2
+
+def sub(var1, var2):
+    return var1 - var2
+
+def mul(var1, var2):
+    return var1 * var2
+
+def div(var1, var2):
+    return var1 / var2
+
+def pow(var1, var2):
+    return var1 ** var2
 
 
 

@@ -80,7 +80,7 @@ class Scalar:
         return result
 
     def _ban_augmented_assignment(self):
-        raise Exception("augmented arithmetic assigments are disabled\nas you need the original variable to get the gradient")
+        raise Exception("In-place operations are not supported for lazydiff variables.")
     
     def __iadd__(self, other):
         self._ban_augmented_assignment()
@@ -90,14 +90,8 @@ class Scalar:
 
     def __imul__(self, other):
         self._ban_augmented_assignment()
-    
-    def __imatmul__(self, other):
-        self._ban_augmented_assignment()
 
     def __itruediv__(self, other):
-        self._ban_augmented_assignment()
-
-    def __ifloordiv__(self, other):
         self._ban_augmented_assignment()
 
     def __ipow__(self, other):
