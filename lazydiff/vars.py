@@ -74,6 +74,11 @@ class Scalar:
             result.parents.append((other * math.pow(self.val, other - 1), self))
         return result
 
+    def __abs__(self):
+        result = Scalar(abs(self.val))
+        result.parents.append((self.val/result.val, self))
+        return result
+
     def _ban_augmented_assignment(self):
         raise Exception("augmented arithmetic assigments are disabled\nas you need the original variable to get the gradient")
     
