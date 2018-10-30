@@ -74,6 +74,30 @@ class Scalar:
             result.parents.append((other * math.pow(self.val, other - 1), self))
         return result
 
+    def _ban_augmented_assignment(self):
+        raise Exception("augmented arithmetic assigments are disabled\nas you need the original variable to get the gradient")
+    
+    def __iadd__(self, other):
+        self._ban_augmented_assignment()
+
+    def __isub__(self, other):
+        self._ban_augmented_assignment()
+
+    def __imul__(self, other):
+        self._ban_augmented_assignment()
+    
+    def __imatmul__(self, other):
+        self._ban_augmented_assignment()
+
+    def __itruediv__(self, other):
+        self._ban_augmented_assignment()
+
+    def __ifloordiv__(self, other):
+        self._ban_augmented_assignment()
+
+    def __ipow__(self, other):
+        self._ban_augmented_assignment()
+
 class Vector:
     def __init__(self, *args):
         self._components = args
