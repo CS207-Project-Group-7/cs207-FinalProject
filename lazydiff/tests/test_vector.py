@@ -153,5 +153,27 @@ def test_vector_rtruediv_fails_with_divide_by_zero():
 
 def test_vector_pow():
     vec = Vector([Scalar(1.), Scalar(2.)])
-    powed = vec**2
+    powed = vec ** 2
     assert powed.val == (1., 4.)
+
+def test_vector_pow_scalar():
+    vec = Vector([Scalar(1.), Scalar(2.)])
+    prod = vec ** Scalar(2.)
+    assert np.all(prod.val == np.array([1., 4.]))
+    assert np.all(prod.grad(vec) == np.array([[2., 0], [0, 4]]))
+
+def test_vector_pow_vector():
+    vec = Vector([Scalar(1.), Scalar(2.)])
+    vec2 = Vector([Scalar(2.), Scalar(3.)])
+    prod = vec ** vec2
+    assert prod.val == (1., 8.)
+
+def test_vector_pow_vector_non_numeric():
+    vec = Vector([Scalar(1.), Scalar(2.)])
+    with pytest.raises(TypeError):
+        vec ** 'hello there'
+
+def test_vector_rpow():
+    vec = Vector([Scalar(1.), Scalar(2.)])
+    prod = 2. ** vec
+    assert prod.val == (2., 4.)
