@@ -174,13 +174,8 @@ def log(var, base=np.e):
     Returns variable representing log applied to the input variable var.
     Base of log is optional with default base e
     """
-    try:
-        result = vars.Scalar(np.log(var.val, base.val))
-        result.parents.append((1 / (var.val * np.log(base.val)), var))
-        result.parents.append((-np.log(var.val) / (base.val * np.log(base.val) ** 2), base))
-    except AttributeError:
-        result = vars.Scalar(np.log(var.val, base))
-        result.parents.append((1 / (var.val * np.log(base)), var))
+    result = vars.Scalar(np.log(var.val, base))
+    result.parents.append((1 / (var.val * np.log(base)), var))
     return result
 
 @vectorize

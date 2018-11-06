@@ -22,20 +22,21 @@ def test_init_vector_fails_with_non_scalar():
     with pytest.raises(TypeError):
         Vector(np.array([7.]))
 
-def test_vector_grad_empty_is_none():
+def test_vector_grad_empty_raises_error():
     vec = Vector([Scalar(2.), Scalar(3.)])
-    assert vec.grad() is None
+    with pytest.raises(ValueError):
+        vec.grad()
 
 def test_vector_grad_scalar():
     val1 = Scalar(2.)
     vec = Vector([val1, Scalar(3.)])
-    assert vec.grad(val1) == ((1.,), (0,))
+    assert np.all(vec.grad(val1) == np.array([[1.], [0,]]))
 
 def test_vector_grad_vector():
     var1 = Scalar(2.)
     var2 = Scalar(3.)
     vec = Vector([var1, var2])
-    assert vec.grad(var1, var2) == ((1., 0.), (0, 1.))
+    assert np.all(vec.grad(var1, var2) == np.array([[1., 0], [0, 1.]]))
 
 def test_get_vector_item():
     vec = Vector([Scalar(2.), Scalar(3.)])
@@ -105,8 +106,8 @@ def test_vector_mul_number():
 def test_vector_mul_scalar():
     vec = Vector([Scalar(1.), Scalar(2.)])
     prod = vec * Scalar(2.)
-    assert prod.val == (2., 4.)
-    assert prod.grad(vec) == ((2., 0), (0, 2))
+    assert np.all(prod.val == np.array([2., 4.]))
+    assert np.all(prod.grad(vec) == np.array([[2., 0], [0, 2]]))
 
 def test_vector_mul_vector():
     vec = Vector([Scalar(1.), Scalar(2.)])
