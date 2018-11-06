@@ -25,7 +25,7 @@ class Scalar:
         for i, var in enumerate(args):
             self._compute_grad(var)
             result[i] = self._grad_cache[var]
-        return tuple(result)
+        return np.array(result)
     
     def _compute_grad(self, var):
         """
@@ -204,15 +204,15 @@ class Vector:
 
     def grad(self, *args):
         if (args == ()): 
-            return
+            raise ValueError('Must pass value(s) to take respct with')
         if (isinstance(args[0],Scalar)):
-            return tuple([component.grad(*args) for component in self._components])
+            return np.array([component.grad(*args) for component in self._components])
         # elementwise or all components?
         elif (isinstance(args[0],Vector) and len(args)==1):
             # elementwise
             # return tuple([comp1.grad(comp2) for comp1, comp2 in zip(self._components, args[0]._components)])
             # Hessian
-            return tuple([comp1.grad(*args[0]) for comp1 in self._components])
+            return np.array([comp1.grad(*args[0]) for comp1 in self._components])
 
     def __getitem__(self, ind):
         if ind not in range(self.__len__()):
