@@ -2,7 +2,7 @@ import numpy as np
 import lazydiff.vars as vars
 
 def vectorize(func):
-    def op_wrapper(*var):
+    def op_wrapper(var):
         try:
             return vars.Vector([func(x) for x in var])
         except TypeError:
