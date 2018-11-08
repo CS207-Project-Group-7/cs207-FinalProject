@@ -2,11 +2,24 @@ import numpy as np
 from lazydiff.vars import Scalar, Vector
 
 def vectorize(func):
+    """
+    Decorator function that extends the ops
+    to support Vector objects
+    """
     def op_wrapper(var, *args):
+        """
+        original implementation
         try:
             return Vector([func(x, *args) for x in var])
         except TypeError:
             return func(var, *args)
+        """
+        if isinstance(var, Vector):
+            return Vector([func(x, *args) for x in var])
+        elif isinstance(var, Scalar):
+            return func(var, *args)
+        else:
+            raise TypeError("Operations only support Scalar or Vector objects")
     return op_wrapper
 
 @vectorize
