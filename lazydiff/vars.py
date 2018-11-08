@@ -225,10 +225,21 @@ class Vector:
         if (len(self) != len(other)):
             raise ValueError("Operands could not be broadcast together with lengths {} and {}".format(len(self),len(other)))
 
+    def _op_with_numeric(self, other, op):
+        if isinstance(other, numbers.Number) or isinstance(other, Scalar):
+            return Vector([op(component, other) for component in self._components])
+        elif isinstance(other, Vector):
+            self._check_broadcast(other)
+            return Vector([op(comp1, comp2) for comp1, comp2 in zip(self._components, other._components)])
+        else:
+            raise TypeError("Input needs to be a numeric value or Vector object")
+
+
     def __neg__(self):
         return Vector([-component for component in self._components])
     
     def __add__(self, other):
+        """
         if isinstance(other, numbers.Number) or isinstance(other, Scalar):
             return Vector([component + other for component in self._components])
         elif isinstance(other, Vector):
@@ -236,6 +247,8 @@ class Vector:
             return Vector([comp1 + comp2 for comp1, comp2 in zip(self._components, other._components)])
         else:
             raise TypeError("Input needs to be a numeric value or Vector object")
+        """
+        return self._op_with_numeric(other, Scalar.__add__)
 
     def __radd__(self, other):
         return self + other
