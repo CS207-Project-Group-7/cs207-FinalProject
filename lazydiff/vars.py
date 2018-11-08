@@ -3,12 +3,27 @@ import numpy as np
 import collections
 import numbers
 
-def in_place_error(*args):
+def _check_scalar_sequence(args):
+   return np.all([isinstance(arg, Scalar) for arg in args])
+
+def _get_scalar_sequence(args):
+    if args == ():
+        raise ValueError('Cannot pass in empty argument')
+    # checks if arguments are Scalar
+    if _check_scalar_sequence(args):
+        return args
+    # checks if sequence of Scalar
+    elif len(args) == 1 and _check_scalar_sequence(args[0]):
+        return tuple(args[0])
+    else:
+        raise TypeError("Inputs need to be Scalar objects or a sequence of Scalar objects")
+
+def _in_place_error(*args):
     raise TypeError("In-place operations are not supported for lazydiff variables.")
 
 def ban_in_place(cls):
     for op in ['add', 'sub', 'mul', 'truediv', 'pow']:
-        setattr(cls, '__i{}__'.format(op), in_place_error)
+        setattr(cls, '__i{}__'.format(op), _in_place_error)
     return cls
 
 @ban_in_place
@@ -30,8 +45,7 @@ class Scalar:
         Returns tuple representing gradient with respect to each variable
         provided as arguments.
         """
-        if args == (): 
-            raise ValueError('Must pass value(s) to take gradient to respect with')
+        args = _get_scalar_sequence(args) 
         result = np.zeros(len(args))
         for i, var in enumerate(args):
             self._compute_grad(var)
@@ -170,22 +184,24 @@ class Scalar:
 
 @ban_in_place
 class Vector:
+    """
+    A class for lazydiff autograd vector variables.
+    """
+
     def __init__(self, *args):
-        if np.all([isinstance(arg, Scalar) for arg in args]):
-            self._components = args
-        elif len(args) == 1 and np.all([isinstance(arg, Scalar) for arg in args[0]]):
-            self._components = tuple(args[0])
-        else:
-            raise TypeError("Inputs need to be Scalar objects or a sequence of Scalar objects")
+        """
+        Initializes Scalar object with arguments of Scalar objects
+        or a sequence of Scalar objects args
+        """
+        self._components = _get_scalar_sequence(args) 
         self.val = tuple([component.val for component in self._components])
 
     def grad(self, *args):
-        if (args == ()): 
-            raise ValueError('Must pass value(s) to take gradient to respect with')
-        if (isinstance(args[0], Scalar)):
-            return np.array([component.grad(*args) for component in self._components])
-        elif (isinstance(args[0], Vector) and len(args) == 1):
-            return np.array([comp1.grad(*args[0]) for comp1 in self._components])
+        """
+        Returns numpy array representing Jacobian
+        with respect to each variable provided as arguments args
+        """
+        return np.array([component.grad(*args) for component in self._components])      
 
     def __getitem__(self, ind):
         if ind not in range(len(self)):
@@ -209,7 +225,7 @@ class Vector:
             self._check_broadcast(other)
             return Vector([op(comp1, comp2) for comp1, comp2 in zip(self._components, other._components)])
         else:
-            raise TypeError("Input needs to be a numeric value or Vector object")
+            raise TypeError("Input needs to be a numeric value, Scalar object, or Vector object")
 
     def _rop_wrapper(self, other, op):
         return Vector([op(component, other) for component in self._components])

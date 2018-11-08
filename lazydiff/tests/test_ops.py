@@ -121,4 +121,4 @@ def test_pow():
 def test_abs():
 	var1 = vars.Scalar(1)
 	var2 = ops.abs(var1)
-	assert var3.val == pytest.approx(1)
+	assert var2.val == pytest.approx(1)

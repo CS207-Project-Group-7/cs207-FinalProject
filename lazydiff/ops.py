@@ -2,11 +2,11 @@ import numpy as np
 from lazydiff.vars import Scalar, Vector
 
 def vectorize(func):
-    def op_wrapper(var, **kwargs):
+    def op_wrapper(var, *args):
         try:
-            return Vector([func(x, **kwargs) for x in var])
+            return Vector([func(x, *args) for x in var])
         except TypeError:
-            return func(var, **kwargs)
+            return func(var, *args)
     return op_wrapper
 
 @vectorize
