@@ -88,12 +88,6 @@ def test_exp():
 	assert var2.val == pytest.approx(1)
 	assert var2.grad(var1) == np.array([1])
 
-# def test_log():
-# 	var1 = vars.Vector(1)
-# 	var2 = ops.log(var1)
-# 	assert var2.val == pytest.approx(0)
-# 	assert var2.grad(var1) == np.array([1])
-
 def test_neg():
 	var1 = vars.Scalar(1)
 	var2 = ops.neg(var1)
@@ -105,32 +99,26 @@ def test_add():
 	var3 = ops.add(var1, var2)
 	assert var3.val == pytest.approx(2)
 
-# def test_sub():
-# 	var1 = vars.Scalar(1)
-# 	var2 = vars.Scalar(1)
-# 	var3 = ops.sub(var1, var2)
-# 	assert var3.val == pytest.approx(0)
+def test_sub():
+	var1 = vars.Scalar(1)
+	var2 = vars.Scalar(1)
+	var3 = ops.sub(var1, var2)
+	assert var3.val == pytest.approx(0)
 
-# def test_mul():
-# 	var1 = vars.Scalar(1)
-# 	var2 = vars.Scalar(1)
-# 	var3 = ops.mul(var1, var2)
-# 	assert var3.val == pytest.approx(1)
+def test_mul():
+	var1 = vars.Scalar(1)
+	var2 = vars.Scalar(1)
+	var3 = ops.mul(var1, var2)
+	assert var3.val == pytest.approx(1)
 
-# def test_div():
-# 	var1 = vars.Scalar(1)
-# 	var2 = vars.Scalar(1)
-# 	var3 = ops.div(var1, var2)
-# 	assert var3.val == pytest.approx(1)
 
-# def test_pow():
-# 	var1 = vars.Scalar(1)
-# 	var2 = vars.Scalar(1)
-# 	var3 = ops.pow(var1, var2)
-# 	assert var3.val == pytest.approx(1)
+def test_pow():
+	var1 = vars.Scalar(1)
+	var2 = vars.Scalar(1)
+	var3 = ops.pow(var1, var2)
+	assert var3.val == pytest.approx(1)
 
-# def test_abs():
-# 	var1 = vars.Scalar(1)
-# 	var2 = vars.Scalar(1)
-# 	var3 = ops.abs(var1, var2)
-# 	assert var3.val == pytest.approx(0)
+def test_abs():
+	var1 = vars.Scalar(1)
+	var2 = ops.abs(var1)
+	assert var3.val == pytest.approx(1)

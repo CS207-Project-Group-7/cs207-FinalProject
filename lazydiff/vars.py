@@ -3,7 +3,7 @@ import numpy as np
 import collections
 import numbers
 
-def in_place_error(_):
+def in_place_error(*args):
     raise TypeError("In-place operations are not supported for lazydiff variables.")
 
 def ban_in_place(cls):
