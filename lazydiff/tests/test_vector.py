@@ -27,6 +27,11 @@ def test_vector_grad_empty_raises_error():
     with pytest.raises(ValueError):
         vec.grad()
 
+def test_vector_grad_invalid_arg_raises_error():
+    vec = Vector([Scalar(2.), Scalar(3.)])
+    with pytest.raises(TypeError):
+        vec.grad('blah')
+
 def test_vector_grad_scalar():
     val1 = Scalar(2.)
     vec = Vector([val1, Scalar(3.)])

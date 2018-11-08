@@ -4,7 +4,7 @@ from lazydiff.vars import Scalar, Vector
 def vectorize(func):
     def op_wrapper(var, *args):
         try:
-            return Vector([func(x,*args) for x in var])
+            return Vector([func(x, *args) for x in var])
         except TypeError:
             return func(var, *args)
     return op_wrapper
@@ -218,4 +218,4 @@ def abs(var):
     """
     Wrapper function for __abs__
     """
-    return abs(var)
+    return var.__abs__()

@@ -11,6 +11,11 @@ def test_grad_no_args():
     with pytest.raises(ValueError):
         var.grad()
 
+def test_vector_grad_invalid_arg_raises_error():
+    var = Scalar(2)
+    with pytest.raises(TypeError):
+        var.grad('blah')
+
 def test_neg():
     var1 = Scalar(2)
     var2 = -var1
