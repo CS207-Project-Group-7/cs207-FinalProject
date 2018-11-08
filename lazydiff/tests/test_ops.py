@@ -32,7 +32,7 @@ def test_acos():
 	var1 = vars.Scalar(1)
 	var2 = ops.acos(var1)
 	assert var2.val == pytest.approx(0)
-	assert var2.grad(var1) == np.array([-1])
+	assert var2.grad(var1) == np.array([-inf])
 
 def test_atan():
 	var1 = vars.Scalar(0)
@@ -68,7 +68,7 @@ def test_acosh():
 	var1 = vars.Scalar(10)
 	var2 = ops.acosh(var1)
 	assert var2.val == pytest.approx(2.993, abs=1e-2)
-	assert var2.grad(var1) == np.array([1])
+	assert var2.grad(var1) == np.array([0.10050378])
 
 def test_acosh():
 	var1 = vars.Scalar(10)
