@@ -3,6 +3,15 @@ import numpy as np
 import collections
 import numbers
 
+def in_place_error(_):
+    raise TypeError("In-place operations are not supported for lazydiff variables.")
+
+def ban_in_place(cls):
+    for op in ['add', 'sub', 'mul', 'truediv', 'pow']:
+        setattr(cls, '__i{}__'.format(op), in_place_error)
+    return cls
+
+@ban_in_place
 class Scalar:
     """
     A class for lazydiff autograd scalar variables.
@@ -48,7 +57,15 @@ class Scalar:
         result = Scalar(-self.val)
         result.parents.append((-1., self))
         return result
-    
+
+    def __abs__(self):
+        """
+        Returns Scalar object representing absolute value of a Scalar object.
+        """
+        result = Scalar(abs(self.val))
+        result.parents.append((self.val / abs(self.val), self))
+        return result
+
     def __add__(self, other):
         """
         Returns Scalar object representing addition of two Scalar objects or
@@ -136,12 +153,11 @@ class Scalar:
             result.parents.append((math.log(self.val) * self.val ** other.val, other))
             return result
         elif isinstance(other, numbers.Number):
-            result = Scalar(math.pow(self.val, other))
+            result = Scalar(self.val ** other)
             result.parents.append((other * self.val ** (other - 1), self))
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Vector object")
-
 
     def __rpow__(self, other):
         """
@@ -152,58 +168,16 @@ class Scalar:
         result.parents.append((math.log(other) * other ** self.val, self))
         return result
 
-    def _ban_augmented_assignment(self):
-        """
-        Internal method for raising error when in-place operation with Scalar
-        objects is attempted.
-        """
-        raise TypeError("In-place operations are not supported for lazydiff variables.")
-    
-    def __iadd__(self, other):
-        """
-        Raises error when in-place addition is called
-        """
-        self._ban_augmented_assignment()
-
-    def __isub__(self, other):
-        """
-        Raises error when in-place subtraction is called
-        """
-        self._ban_augmented_assignment()
-
-    def __imul__(self, other):
-        """
-        Raises error when in-place multiplication is called
-        """
-        self._ban_augmented_assignment()
-
-    def __itruediv__(self, other):
-        """
-        Raises error when in-place division is called
-        """
-        self._ban_augmented_assignment()
-
-    def __ipow__(self, other):
-        """
-        Raises error when in-place exponentiation is called
-        """
-        self._ban_augmented_assignment()
-
-
+@ban_in_place
 class Vector:
     def __init__(self, *args):
-        if isinstance(args[0], Scalar):
+        if np.all([isinstance(arg, Scalar) for arg in args]):
             self._components = args
-            self.val = tuple([component.val for component in self._components])
-        # support list or ndarray input
-        elif ((isinstance(args[0], collections.Sequence) or isinstance(args[0], np.ndarray)) and len(args) == 1):
+        elif len(args) == 1 and np.all([isinstance(arg, Scalar) for arg in args[0]]):
             self._components = tuple(args[0])
-            try:
-                self.val = tuple([component.val for component in self._components])
-            except AttributeError:
-                raise TypeError('Sequence elements must be of type Scalar')
         else:
-            raise TypeError("inputs need to be Scalar objects or a sequence of Scalar objects")
+            raise TypeError("Inputs need to be Scalar objects or a sequence of Scalar objects")
+        self.val = tuple([component.val for component in self._components])
 
     def grad(self, *args):
         if (args == ()): 
@@ -225,7 +199,10 @@ class Vector:
         if (len(self) != len(other)):
             raise ValueError("Operands could not be broadcast together with lengths {} and {}".format(len(self),len(other)))
 
-    def _op_with_numeric(self, other, op):
+    def _unop_wrapper(self, op):
+        return Vector([op(component) for component in self._components])
+
+    def _binop_wrapper(self, other, op):
         if isinstance(other, numbers.Number) or isinstance(other, Scalar):
             return Vector([op(component, other) for component in self._components])
         elif isinstance(other, Vector):
@@ -234,57 +211,41 @@ class Vector:
         else:
             raise TypeError("Input needs to be a numeric value or Vector object")
 
+    def _rop_wrapper(self, other, op):
+        return Vector([op(component, other) for component in self._components])
 
     def __neg__(self):
-        return Vector([-component for component in self._components])
+        return self._unop_wrapper(Scalar.__neg__)
+
+    def __abs__(self):
+        return self._unop_wrapper(Scalar.__abs__)
     
     def __add__(self, other):
-        """
-        if isinstance(other, numbers.Number) or isinstance(other, Scalar):
-            return Vector([component + other for component in self._components])
-        elif isinstance(other, Vector):
-            self._check_broadcast(other)
-            return Vector([comp1 + comp2 for comp1, comp2 in zip(self._components, other._components)])
-        else:
-            raise TypeError("Input needs to be a numeric value or Vector object")
-        """
-        return self._op_with_numeric(other, Scalar.__add__)
+        return self._binop_wrapper(other, Scalar.__add__)
 
     def __radd__(self, other):
-        return self + other
+        return self._rop_wrapper(other, Scalar.__radd__)
 
     def __sub__(self, other):
-        return self + (-other)
+        return self._binop_wrapper(other, Scalar.__sub__)
 
     def __rsub__(self, other):
-        return -self + other
+        return self._rop_wrapper(other, Scalar.__rsub__)
 
     def __mul__(self, other):
-        if isinstance(other, numbers.Number) or isinstance(other, Scalar):
-            return Vector([component * other for component in self._components])
-        elif isinstance(other, Vector):
-            self._check_broadcast(other)
-            return Vector([comp1 * comp2 for comp1, comp2 in zip(self._components, other._components)])
-        else:
-            raise TypeError("Input needs to be Scalar or Vector object")
+        return self._binop_wrapper(other, Scalar.__mul__)
     
     def __rmul__(self, other):
-        return self * other
+        return self._rop_wrapper(other, Scalar.__rmul__)
 
     def __truediv__(self, other):
-        return self * (other ** -1)
+        return self._binop_wrapper(other, Scalar.__truediv__)
 
     def __rtruediv__(self, other):
-        return (self ** -1) * other
+        return self._rop_wrapper(other, Scalar.__rtruediv__)
 
     def __pow__(self, other):
-        if isinstance(other, numbers.Number) or isinstance(other, Scalar):
-            return Vector([component ** other for component in self._components])
-        elif isinstance(other, Vector):
-            self._check_broadcast(other)
-            return Vector([comp1 ** comp2 for comp1, comp2 in zip(self._components, other._components)])
-        else:
-            raise TypeError("Input needs to be Scalar or Vector object")
+        return self._binop_wrapper(other, Scalar.__pow__)
 
     def __rpow__(self, other):
-        return Vector([other ** component for component in self._components])
+        return self._rop_wrapper(other, Scalar.__rpow__)

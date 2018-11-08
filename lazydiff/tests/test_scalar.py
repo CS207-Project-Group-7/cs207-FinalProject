@@ -11,6 +11,18 @@ def test_grad_no_args():
     with pytest.raises(ValueError):
         var.grad()
 
+def test_neg():
+    var1 = Scalar(2)
+    var2 = -var1
+    assert var2.val == -2
+    assert var2.grad(var1) == np.array([-1])
+
+def test_abs():
+    var1 = Scalar(-2)
+    var2 = abs(var1)
+    assert var2.val == 2
+    assert var2.grad(var1) == np.array([-1])
+
 def test_add_scalars():
     var1 = Scalar(1)
     var2 = Scalar(2)
@@ -102,7 +114,7 @@ def test_div_scalar_number():
 
 def test_div_scalar_fails_with_divide_by_zero():
     vec = Scalar(1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ZeroDivisionError):
         vec / Scalar(0.)
 
 def test_div_scalar_number_fails_with_divide_by_zero():
@@ -117,7 +129,7 @@ def test_rdiv_scalars():
     assert np.all(var2.grad(var1) == np.array([-2 / 3]))
 
 def test_rdiv_scalar_fails_with_divide_by_zero():
-    with pytest.raises(ValueError):
+    with pytest.raises(ZeroDivisionError):
         1 / Scalar(0.)
 
 def test_div_scalar_non_number():

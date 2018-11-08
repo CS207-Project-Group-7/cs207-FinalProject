@@ -54,6 +54,10 @@ def test_vector_negation():
     vec = Vector([Scalar(2.), Scalar(3.)])
     assert (-vec).val == (-2., -3.)
 
+def test_vector_abs():
+    vec = Vector([Scalar(2.), Scalar(-3.)])
+    assert abs(vec).val == (2., 3.)
+
 def test_vector_add_number():
     vec = Vector([Scalar(1.), Scalar(2.)])
     added = vec + 2.
@@ -138,7 +142,7 @@ def test_vector_truediv():
 
 def test_vector_truediv_fails_with_divide_by_zero():
     vec = Vector([Scalar(1.), Scalar(2.)])
-    with pytest.raises(ValueError):
+    with pytest.raises(ZeroDivisionError):
         vec / Scalar(0.)
 
 def test_vector_rtruediv():
@@ -148,7 +152,7 @@ def test_vector_rtruediv():
 
 def test_vector_rtruediv_fails_with_divide_by_zero():
     vec = Vector([Scalar(0.), Scalar(0.)])
-    with pytest.raises(ValueError):
+    with pytest.raises(ZeroDivisionError):
         1. / vec
 
 def test_vector_pow():
@@ -177,3 +181,28 @@ def test_vector_rpow():
     vec = Vector([Scalar(1.), Scalar(2.)])
     prod = 2. ** vec
     assert prod.val == (2., 4.)
+
+def test_iadd_banned():
+    var = Vector([Scalar(1.), Scalar(2.)])
+    with pytest.raises(TypeError):
+        var += 3
+
+def test_isub_banned():
+    var = Vector([Scalar(1.), Scalar(2.)])
+    with pytest.raises(TypeError):
+        var -= 3
+
+def test_imul_banned():
+    var = Vector([Scalar(1.), Scalar(2.)])
+    with pytest.raises(TypeError):
+        var *= 3
+
+def test_idiv_banned():
+    var = Vector([Scalar(1.), Scalar(2.)])
+    with pytest.raises(TypeError):
+        var /= 3
+
+def test_ipow_banned():
+    var = Vector([Scalar(1.), Scalar(2.)])
+    with pytest.raises(TypeError):
+        var **= 3
