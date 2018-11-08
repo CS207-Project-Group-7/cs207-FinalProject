@@ -88,11 +88,11 @@ def test_exp():
 	assert var2.val == pytest.approx(1)
 	assert var2.grad(var1) == np.array([1])
 
-def test_log():
-	var1 = vars.Scalar(1)
-	var2 = ops.log(var1)
-	assert var2.val == pytest.approx(0)
-	assert var2.grad(var1) == np.array([1])
+# def test_log():
+# 	var1 = vars.Vector(1)
+# 	var2 = ops.log(var1)
+# 	assert var2.val == pytest.approx(0)
+# 	assert var2.grad(var1) == np.array([1])
 
 def test_neg():
 	var1 = vars.Scalar(1)
@@ -100,8 +100,8 @@ def test_neg():
 	assert var2.val == pytest.approx(-1)
 
 def test_add():
-	var1 = vars.Scalar(1).val
-	var2 = vars.Scalar(1).val
+	var1 = vars.Scalar(1)
+	var2 = vars.Scalar(1)
 	var3 = ops.add(var1, var2)
 	assert var3.val == pytest.approx(2)
 
