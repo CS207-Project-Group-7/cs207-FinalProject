@@ -2,11 +2,11 @@ import numpy as np
 from lazydiff.vars import Scalar, Vector
 
 def vectorize(func):
-    def op_wrapper(var):
+    def op_wrapper(var, **kwargs):
         try:
-            return Vector([func(x) for x in var])
+            return Vector([func(x, **kwargs) for x in var])
         except TypeError:
-            return func(var)
+            return func(var, **kwargs)
     return op_wrapper
 
 @vectorize
@@ -218,4 +218,4 @@ def abs(var):
     """
     Wrapper function for __abs__
     """
-    return abs(var)
+    return var.__abs__()
