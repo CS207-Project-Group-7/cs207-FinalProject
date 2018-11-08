@@ -4,9 +4,15 @@ import collections
 import numbers
 
 def in_place_error(*args):
+    """
+    Raises error for in-place operations
+    """
     raise TypeError("In-place operations are not supported for lazydiff variables.")
 
 def ban_in_place(cls):
+    """
+    Decorator that bans in-place operations
+    """
     for op in ['add', 'sub', 'mul', 'truediv', 'pow']:
         setattr(cls, '__i{}__'.format(op), in_place_error)
     return cls
@@ -179,8 +185,7 @@ class Vector:
         Initializes Scalar object with arguments of Scalar objects
         or a sequence of Scalar objects args
         """
-        # checks if arguments are Scalar
-        if np.all([isinstance(arg, Scalar) for arg in args]):
+        if self._check_scalar_arg(*args):
             self._components = args
         # checks if sequence of Scalar
         elif len(args) == 1 and np.all([isinstance(arg, Scalar) for arg in args[0]]):
@@ -196,30 +201,49 @@ class Vector:
         """
         if (args == ()): 
             raise ValueError('Must pass value(s) to take gradient to respect with')
-        elif self._check_scalar_arg(args):
+        elif self._check_scalar_arg(*args):
             return np.array([component.grad(*args) for component in self._components])
         elif (isinstance(args[0], Vector) and len(args) == 1):
             return np.array([comp1.grad(*args[0]) for comp1 in self._components])
 
     def __getitem__(self, ind):
+        """
+        Returns a Scalar object in the given index
+        """
         if ind not in range(len(self)):
             raise IndexError
         return self._components[ind]
 
     def __len__(self):
+        """
+        Returns the number of Scalar objects the vector holds
+        """
         return len(self._components)
 
-    def _check_scalar_arg(self, args):
+    def _check_scalar_arg(self, *args):
+        """
+        Return a bool about whether all elements 
+        from the argument are Scalar instances
+        """
         return np.all([isinstance(arg, Scalar) for arg in args])
 
     def _check_broadcast(self, other):
+        """
+        Returns a bool about whether operands are of matching length
+        """
         if (len(self) != len(other)):
             raise ValueError("Operands could not be broadcast together with lengths {} and {}".format(len(self),len(other)))
 
     def _unop_wrapper(self, op):
+        """
+        Returns a Vector instance unwrapping unitary operation
+        """
         return Vector([op(component) for component in self._components])
 
     def _binop_wrapper(self, other, op):
+        """
+        Returns a Vector instance unwrapping binary operation
+        """
         if isinstance(other, numbers.Number) or isinstance(other, Scalar):
             return Vector([op(component, other) for component in self._components])
         elif isinstance(other, Vector):
@@ -229,40 +253,99 @@ class Vector:
             raise TypeError("Input needs to be a numeric value or Vector object")
 
     def _rop_wrapper(self, other, op):
+        """
+        Returns a Vector instance unwrapping reverse binary operations
+        """
         return Vector([op(component, other) for component in self._components])
 
     def __neg__(self):
+        """
+        Returns a Vector instance with the negation of the elements
+        """
         return self._unop_wrapper(Scalar.__neg__)
 
     def __abs__(self):
+        """
+        Returns a Vector instance with the absolute of the elements
+        """
         return self._unop_wrapper(Scalar.__abs__)
     
     def __add__(self, other):
+        """
+        Returns a Vector instance representing addition of 
+        two Vector instances or the addition of a Scalar instance
+        and a number by broadcasting
+        """
         return self._binop_wrapper(other, Scalar.__add__)
 
     def __radd__(self, other):
+        """
+        Returns a Vector instance representing right addition of 
+        two Vector instances or the right addition of a Scalar instance
+        and a number by broadcasting
+        """
         return self._rop_wrapper(other, Scalar.__radd__)
 
     def __sub__(self, other):
+        """
+        Returns a Vector instance representing subtraction of 
+        two Vector instances or the subtraction of a Scalar instance
+        and a number by broadcasting
+        """
         return self._binop_wrapper(other, Scalar.__sub__)
 
     def __rsub__(self, other):
+        """
+        Returns a Vector instance representing right subtraction of 
+        two Vector instances or the right subtraction of a Scalar instance
+        and a number by broadcasting
+        """
         return self._rop_wrapper(other, Scalar.__rsub__)
 
     def __mul__(self, other):
+        """
+        Returns a Vector instance representing multiplication of 
+        two Vector instances or the multiplication of a Scalar instance
+        and a number by broadcasting
+        """
         return self._binop_wrapper(other, Scalar.__mul__)
     
     def __rmul__(self, other):
+        """
+        Returns a Vector instance representing right multiplication of 
+        two Vector instances or the right multiplication of a Scalar instance
+        and a number by broadcasting
+        """
         return self._rop_wrapper(other, Scalar.__rmul__)
 
     def __truediv__(self, other):
+        """
+        Returns a Vector instance representing division of 
+        two Vector instances or the division of a Scalar instance
+        and a number by broadcasting
+        """
         return self._binop_wrapper(other, Scalar.__truediv__)
 
     def __rtruediv__(self, other):
+        """
+        Returns a Vector instance representing right division of 
+        two Vector instances or the right division of a Scalar instance
+        and a number by broadcasting
+        """
         return self._rop_wrapper(other, Scalar.__rtruediv__)
 
     def __pow__(self, other):
+        """
+        Returns Vector instance representing exponentiation of 
+        twi Vector instances or the exponentiation of a Scalar instance
+        and a number by broadcasting
+        """
         return self._binop_wrapper(other, Scalar.__pow__)
 
     def __rpow__(self, other):
+        """
+        Returns Vector instance representing right exponentiation of 
+        twi Vector instances or the right exponentiation of a Scalar instance
+        and a number by broadcasting
+        """
         return self._rop_wrapper(other, Scalar.__rpow__)
