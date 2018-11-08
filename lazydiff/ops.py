@@ -41,7 +41,7 @@ def asin(var):
     """
     Returns variable representing asin applied to the input variable var
     """
-    result = vars.Scalar(np.asin(var.val))
+    result = vars.Scalar(np.arcsin(var.val))
     result.parents.append((1 / np.sqrt(1 - var.val ** 2), var))
     return result
 
@@ -50,8 +50,8 @@ def acos(var):
     """
     Returns variable representing acos applied to the input variable var
     """
-    result = vars.Scalar(np.arctan(var.val))
-    result.parents.append((1 / (var.val ** 2 + 1), var))
+    result = vars.Scalar(np.arccos(var.val))
+    result.parents.append((-1 / np.sqrt(1 - var.val ** 2), var))
     return result
 
 @vectorize
@@ -59,8 +59,8 @@ def atan(var):
     """
     Returns variable representing atan applied to the input variable var
     """
-    result = vars.Scalar(np.arcsin(var.val))
-    result.parents.append((1 / np.sqrt(1 - var.val ** 2), var))
+    result = vars.Scalar(np.arctan(var.val))
+    result.parents.append((1 / (var.val ** 2 + 1), var))
     return result
 
 @vectorize
