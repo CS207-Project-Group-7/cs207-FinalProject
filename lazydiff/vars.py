@@ -170,9 +170,19 @@ class Scalar:
 
 @ban_in_place
 class Vector:
+    """
+    A class for lazydiff autograd vector variables.
+    """
+
     def __init__(self, *args):
+        """
+        Initializes Scalar object with arguments of Scalar objects
+        or a sequence of Scalar objects args
+        """
+        # checks if arguments are Scalar
         if np.all([isinstance(arg, Scalar) for arg in args]):
             self._components = args
+        # checks if sequence of Scalar
         elif len(args) == 1 and np.all([isinstance(arg, Scalar) for arg in args[0]]):
             self._components = tuple(args[0])
         else:
@@ -180,9 +190,13 @@ class Vector:
         self.val = tuple([component.val for component in self._components])
 
     def grad(self, *args):
+        """
+        Returns numpy array representing Jacobian
+        with respect to each variable provided as arguments args
+        """
         if (args == ()): 
             raise ValueError('Must pass value(s) to take gradient to respect with')
-        if (isinstance(args[0], Scalar)):
+        elif self._check_scalar_arg(args):
             return np.array([component.grad(*args) for component in self._components])
         elif (isinstance(args[0], Vector) and len(args) == 1):
             return np.array([comp1.grad(*args[0]) for comp1 in self._components])
@@ -194,6 +208,9 @@ class Vector:
 
     def __len__(self):
         return len(self._components)
+
+    def _check_scalar_arg(self, args):
+        return np.all([isinstance(arg, Scalar) for arg in args])
 
     def _check_broadcast(self, other):
         if (len(self) != len(other)):
