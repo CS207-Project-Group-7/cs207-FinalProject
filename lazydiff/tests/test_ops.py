@@ -108,29 +108,29 @@ def test_add():
 # def test_sub():
 # 	var1 = vars.Scalar(1)
 # 	var2 = vars.Scalar(1)
-# 	var3 = ops.sub([var1, var2])
+# 	var3 = ops.sub(var1, var2)
 # 	assert var3.val == pytest.approx(0)
 
 # def test_mul():
 # 	var1 = vars.Scalar(1)
 # 	var2 = vars.Scalar(1)
-# 	var3 = ops.mul([var1, var2])
+# 	var3 = ops.mul(var1, var2)
 # 	assert var3.val == pytest.approx(1)
 
 # def test_div():
 # 	var1 = vars.Scalar(1)
 # 	var2 = vars.Scalar(1)
-# 	var3 = ops.div([var1, var2])
+# 	var3 = ops.div(var1, var2)
 # 	assert var3.val == pytest.approx(1)
 
 # def test_pow():
 # 	var1 = vars.Scalar(1)
 # 	var2 = vars.Scalar(1)
-# 	var3 = ops.pow([var1, var2])
+# 	var3 = ops.pow(var1, var2)
 # 	assert var3.val == pytest.approx(1)
 
 # def test_abs():
 # 	var1 = vars.Scalar(1)
 # 	var2 = vars.Scalar(1)
-# 	var3 = ops.abs([var1, var2])
+# 	var3 = ops.abs(var1, var2)
 # 	assert var3.val == pytest.approx(0)
