@@ -128,8 +128,3 @@ def test_pow():
 	var2 = vars.Scalar(1)
 	var3 = ops.pow(var1, var2)
 	assert var3.val == pytest.approx(1)
-
-def test_var_not_Scalar():
-    var = 1
-    with pytest.raises(TypeError):
-        ops.neg(var)
