@@ -17,10 +17,10 @@ def test_cos():
 	assert var2.grad(var1) == pytest.approx([0])
 
 def test_tan():
-	var1 = vars.Scalar(math.pi/4.)
+	var1 = vars.Scalar(0.)
 	var2 = ops.tan(var1)
-	assert var2.val == pytest.approx(1)
-	assert var2.grad(var1) == np.array([2.])
+	assert var2.val == pytest.approx(0)
+	assert var2.grad(var1) == np.array([1])
 
 def test_asin():
 	var1 = vars.Scalar(0.)
