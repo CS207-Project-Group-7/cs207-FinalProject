@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/CS207-Project-Group-7/cs207-FinalProject/badge.svg?branch=master)](https://coveralls.io/github/CS207-Project-Group-7/cs207-FinalProject?branch=master)
 
 
-<img src="docs/ForwardAccumulationAutomaticDifferentiation.png" align="right" width="400" height="150">
+<img src="docs/ForwardAccumulationAutomaticDifferentiation.png" align="right" width="400" height="200">
 
 **Lazydiff** is a library for performing automatic differentiation (AD). AD is a set of techniques to numerically evaluate the derivative of a function motivated by deficiencies in classical methods. Numerical approximation is often not accurate enough and can be computationally expensive and symbolic differentiation tends to lead to inefficient code and faces the difficulty of converting a computer program into a single expression. Both classical methods have problems with calculating higher derivatives, where the complexity and errors increase, and are slow when it comes to computing the partial derivatives of a function with respect to many inputs. Automatic differentiation endeavors to solve all of these problems, and has been used in neural networks for back propagation and weight adjustment based on the loss function, and in scientific computing where it is often difficult to analytically compute the derivatives.
 
