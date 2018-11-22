@@ -52,7 +52,7 @@ class Scalar:
         """
         self.val = val
         self._grad_cache = {self: 1}
-        self.parents = []
+        self.parents = {}
     
     def grad(self, *args):
         """
@@ -73,7 +73,7 @@ class Scalar:
         """
         if var not in self._grad_cache:
             grad = 0
-            for val, parent_var in self.parents:
+            for parent_var, val in self.parents.items():
                 parent_var._compute_grad(var)
                 grad += val * parent_var._grad_cache[var]
             self._grad_cache[var] = grad
@@ -83,7 +83,7 @@ class Scalar:
         Returns Scalar object representing negation of a Scalar object.
         """
         result = Scalar(-self.val)
-        result.parents.append((-1., self))
+        result.parents[self] = -1.
         return result
 
     def __abs__(self):
@@ -91,7 +91,7 @@ class Scalar:
         Returns Scalar object representing absolute value of a Scalar object.
         """
         result = Scalar(abs(self.val))
-        result.parents.append((self.val / abs(self.val), self))
+        result.parents[self] = self.val / abs(self.val)
         return result
 
     def __add__(self, other):
@@ -101,12 +101,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val + other.val)
-            result.parents.append((1., self))
-            result.parents.append((1., other))
+            result.parents[self] = 1.
+            result.parents[other] = 1.
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(self.val + other)
-            result.parents.append((1., self))
+            result.parents[self] = 1.
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Vector object")
@@ -139,12 +139,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val * other.val)
-            result.parents.append((other.val, self))
-            result.parents.append((self.val, other))
+            result.parents[self] = other.val
+            result.parents[other] = self.val
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(other * self.val)
-            result.parents.append((other, self))
+            result.parents[self] = other
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Vector object")
@@ -177,12 +177,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val ** other.val)
-            result.parents.append((other.val * self.val ** (other.val - 1), self))
-            result.parents.append((math.log(self.val) * self.val ** other.val, other))
+            result.parents[self] = other.val * self.val ** (other.val - 1)
+            result.parents[other] = math.log(self.val) * self.val ** other.val
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(self.val ** other)
-            result.parents.append((other * self.val ** (other - 1), self))
+            result.parents[self] = other * self.val ** (other - 1)
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Vector object")
@@ -193,7 +193,7 @@ class Scalar:
         object with a Python number
         """
         result = Scalar(other ** self.val)
-        result.parents.append((math.log(other) * other ** self.val, self))
+        result.parents[self] = math.log(other) * other ** self.val
         return result
 
 @ban_in_place
