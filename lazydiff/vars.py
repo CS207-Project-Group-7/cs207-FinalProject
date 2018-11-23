@@ -46,13 +46,19 @@ class Scalar:
     A class for lazydiff autograd scalar variables.
     """
 
-    def __init__(self, val):
+    def __init__(self, val, seed=1):
         """
         Initializes Scalar object with numerical value val.
         """
         self.val = val
         self._grad_cache = {self: 1}
         self.parents = {}
+
+    def __repr__(self):
+        return 'Scalar(%f)' % self.val
+
+    def __hash__(self):
+        return id(self)
     
     def grad(self, *args):
         """
@@ -109,7 +115,7 @@ class Scalar:
             result.parents[self] = 1.
             return result
         else:
-            raise TypeError("Input needs to be a numeric value or Vector object")
+            raise TypeError("Input needs to be a numeric value or Scalar object")
 
     def __radd__(self, other):
         """
@@ -147,7 +153,7 @@ class Scalar:
             result.parents[self] = other
             return result
         else:
-            raise TypeError("Input needs to be a numeric value or Vector object")
+            raise TypeError("Input needs to be a numeric value or Scalar object")
     
     def __rmul__(self, other):
         """
@@ -185,7 +191,7 @@ class Scalar:
             result.parents[self] = other * self.val ** (other - 1)
             return result
         else:
-            raise TypeError("Input needs to be a numeric value or Vector object")
+            raise TypeError("Input needs to be a numeric value or Scalar object")
 
     def __rpow__(self, other):
         """
@@ -195,6 +201,24 @@ class Scalar:
         result = Scalar(other ** self.val)
         result.parents[self] = math.log(other) * other ** self.val
         return result
+
+    def __eq__(self, other):
+        return self.val == other.val
+    
+    def __ne__(self, other):
+        return self.val != other.val
+
+    def __lt__(self, other):
+        return self.val < other.val
+
+    def __gt__(self, other):
+        return self.val > other.val
+
+    def __le_(self, other):
+        return self.val <= other.val
+
+    def __ge__(self, other):
+        return self.val >= other.val
 
 @ban_in_place
 class Vector:
@@ -209,6 +233,9 @@ class Vector:
         """
         self._components = _get_scalar_sequence(args) 
         self.val = tuple([component.val for component in self._components])
+
+    def __repr__(self):
+        return 'Vector(%s)' % str([component.val for component in self._components])
 
     def grad(self, *args):
         """
@@ -260,7 +287,17 @@ class Vector:
         """
         Returns a Vector instance unwrapping reverse binary operations
         """
-        return Vector([op(component, other) for component in self._components])
+        if isinstance(other, numbers.Number) or isinstance(other, Scalar):
+            return Vector([op(component, other) for component in self._components])
+        else:
+            raise TypeError("Input needs to be a numeric value or Scalar object")
+
+    def _comp_wrapper(self, other, op):
+        if isinstance(other, Vector):
+            self._check_broadcast(other)
+            return np.array([op(comp1, comp2) for comp1, comp2 in zip(self._components, other._components)])
+        else:
+            raise TypeError("Input needs to be a Vector object")
 
     def __neg__(self):
         """
@@ -353,3 +390,21 @@ class Vector:
         and a number by broadcasting
         """
         return self._rop_wrapper(other, Scalar.__rpow__)
+
+    def __eq__(self, other):
+        return self._comp_wrapper(other, Scalar.__eq__)
+    
+    def __ne__(self, other):
+        return self._comp_wrapper(other, Scalar.__ne__)
+
+    def __lt__(self, other):
+        return self._comp_wrapper(other, Scalar.__lt__)
+
+    def __gt__(self, other):
+        return self._comp_wrapper(other, Scalar.__gt__)
+
+    def __le_(self, other):
+        return self._comp_wrapper(other, Scalar.__le__)
+
+    def __ge__(self, other):
+        return self._comp_wrapper(other, Scalar.__ge__)

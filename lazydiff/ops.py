@@ -184,6 +184,14 @@ def log(var, base=np.e):
     result.parents[var] = 1 / (var.val * np.log(base))
     return result
 
+@vectorize
+def logistic(var):
+    return 1 / (1 + exp(-var))
+
+@vectorize
+def sqrt(var):
+    return var ** 0.5
+
 def neg(var):
     """
     Wrapper function for __neg__
