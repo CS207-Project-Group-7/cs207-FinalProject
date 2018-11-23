@@ -51,8 +51,10 @@ class Scalar:
         Initializes Scalar object with numerical value val.
         """
         self.val = val
-        self._grad_cache = {self: 1}
+        self._forward_cache = {self: seed}
+        self._backward_cache = {self: seed}
         self.parents = {}
+        self.children = {}
 
     def __repr__(self):
         return 'Scalar(%f)' % self.val
@@ -60,7 +62,7 @@ class Scalar:
     def __hash__(self):
         return id(self)
     
-    def grad(self, *args):
+    def grad(self, *args, mode='forward'):
         """
         Returns tuple representing gradient with respect to each variable
         provided as arguments.
@@ -68,21 +70,39 @@ class Scalar:
         args = _get_scalar_sequence(args) 
         result = np.zeros(len(args))
         for i, var in enumerate(args):
-            self._compute_grad(var)
-            result[i] = self._grad_cache[var]
+            if mode == 'forward':
+                self._forward(var)
+                result[i] = self._forward_cache[var]
+            elif mode == 'backward':
+                self._backward(var)
+                result[i] = self._backward_cache[var]
+            else:
+                raise ValueError('Invalid grad mode entered')
         return result
     
-    def _compute_grad(self, var):
+    def _forward(self, var):
         """
         Internal method for computing gradient with respect to variable var
         and storing the result in the gradient cache dictionary.
         """
-        if var not in self._grad_cache:
+        if var not in self._forward_cache:
             grad = 0
             for parent_var, val in self.parents.items():
-                parent_var._compute_grad(var)
-                grad += val * parent_var._grad_cache[var]
-            self._grad_cache[var] = grad
+                parent_var._forward(var)
+                grad += val * parent_var._forward_cache[var]
+            self._forward_cache[var] = grad
+
+    def _backward(self, var):
+        """
+        Internal method for computing gradient with respect to variable var
+        and storing the result in the gradient cache dictionary.
+        """
+        if var not in self._backward_cache:
+            grad = 0
+            for child_var, val in self.children.items():
+                child_var._backward(var)
+                grad += val * child_var._backward_cache[var]
+            self._backward_cache[var] = grad
 
     def __neg__(self):
         """
@@ -107,12 +127,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val + other.val)
-            result.parents[self] = 1.
-            result.parents[other] = 1.
+            result.parents[self] = self.children[result] = 1.
+            result.parents[other] = other.children[result] = 1.
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(self.val + other)
-            result.parents[self] = 1.
+            result.parents[self] = self.children[result] = 1.
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Scalar object")
@@ -145,12 +165,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val * other.val)
-            result.parents[self] = other.val
-            result.parents[other] = self.val
+            result.parents[self] = self.children[result] = other.val
+            result.parents[other] = other.children[result] = self.val
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(other * self.val)
-            result.parents[self] = other
+            result.parents[self] = self.children[result] = other
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Scalar object")
@@ -183,12 +203,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val ** other.val)
-            result.parents[self] = other.val * self.val ** (other.val - 1)
-            result.parents[other] = math.log(self.val) * self.val ** other.val
+            result.parents[self] = self.children[result] = other.val * self.val ** (other.val - 1)
+            result.parents[other] = other.children[result] = math.log(self.val) * self.val ** other.val
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(self.val ** other)
-            result.parents[self] = other * self.val ** (other - 1)
+            result.parents[self] = self.children[result] = other * self.val ** (other - 1)
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Scalar object")
@@ -199,7 +219,7 @@ class Scalar:
         object with a Python number
         """
         result = Scalar(other ** self.val)
-        result.parents[self] = math.log(other) * other ** self.val
+        result.parents[self] = self.children[result] = math.log(other) * other ** self.val
         return result
 
     def __eq__(self, other):

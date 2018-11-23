@@ -21,7 +21,7 @@ def sin(var):
     Returns variable representing sin applied to the input variable var
     """
     result = Scalar(np.sin(var.val))
-    result.parents[var] = np.cos(var.val)
+    result.parents[var] = var.children[result] = np.cos(var.val)
     return result
 
 @vectorize
@@ -30,7 +30,7 @@ def cos(var):
     Returns variable representing cos applied to the input variable var
     """
     result = Scalar(np.cos(var.val))
-    result.parents[var] = -np.sin(var.val)
+    result.parents[var] = var.children[result] = -np.sin(var.val)
     return result
 
 @vectorize
@@ -39,7 +39,7 @@ def tan(var):
     Returns variable representing tan applied to the input variable var
     """
     result = Scalar(np.tan(var.val))
-    result.parents[var] = 1 / np.cos(var.val) ** 2
+    result.parents[var] = var.children[result] = 1 / np.cos(var.val) ** 2
     return result
 
 @vectorize
@@ -48,7 +48,7 @@ def asin(var):
     Returns variable representing asin applied to the input variable var
     """
     result = Scalar(np.arcsin(var.val))
-    result.parents[var] = 1 / np.sqrt(1 - var.val ** 2)
+    result.parents[var] = var.children[result] = 1 / np.sqrt(1 - var.val ** 2)
     return result
 
 @vectorize
@@ -57,7 +57,7 @@ def acos(var):
     Returns variable representing acos applied to the input variable var
     """
     result = Scalar(np.arccos(var.val))
-    result.parents[var] = -1 / np.sqrt(1 - var.val ** 2)
+    result.parents[var] = var.children[result] = -1 / np.sqrt(1 - var.val ** 2)
     return result
 
 @vectorize
@@ -66,7 +66,7 @@ def atan(var):
     Returns variable representing atan applied to the input variable var
     """
     result = Scalar(np.arctan(var.val))
-    result.parents[var] = 1 / (var.val ** 2 + 1)
+    result.parents[var] = var.children[result] = 1 / (var.val ** 2 + 1)
     return result
 
 @vectorize
@@ -96,7 +96,7 @@ def sinh(var):
     Returns variable representing sinh applied to the input variable var
     """
     result = Scalar(np.sinh(var.val))
-    result.parents[var] = np.cosh(var.val)
+    result.parents[var] = var.children[result] = np.cosh(var.val)
     return result
 
 @vectorize
@@ -105,7 +105,7 @@ def cosh(var):
     Returns variable representing cosh applied to the input variable var
     """
     result = Scalar(np.cosh(var.val))
-    result.parents[var] = np.sinh(var.val)
+    result.parents[var] = var.children[result] = np.sinh(var.val)
     return result
 
 @vectorize
@@ -114,7 +114,7 @@ def tanh(var):
     Returns variable representing tanh applied to the input variable var
     """
     result = Scalar(np.tanh(var.val))
-    result.parents[var] = 1 / (np.cosh(var.val) ** 2)
+    result.parents[var] = var.children[result] = 1 / (np.cosh(var.val) ** 2)
     return result
 
 @vectorize
@@ -123,7 +123,7 @@ def asinh(var):
     Returns variable representing asinh applied to the input variable var
     """
     result = Scalar(np.arcsinh(var.val))
-    result.parents[var] = 1 / np.sqrt(var.val ** 2 + 1)
+    result.parents[var] = var.children[result] = 1 / np.sqrt(var.val ** 2 + 1)
     return result
 
 @vectorize
@@ -132,7 +132,7 @@ def acosh(var):
     Returns variable representing acosh applied to the input variable var
     """
     result = Scalar(np.arccosh(var.val))
-    result.parents[var] = 1 / np.sqrt(var.val ** 2 - 1)
+    result.parents[var] = var.children[result] = 1 / np.sqrt(var.val ** 2 - 1)
     return result
 
 @vectorize
@@ -141,7 +141,7 @@ def atanh(var):
     Returns variable representing atanh applied to the input variable var
     """
     result = Scalar(np.arctanh(var.val))
-    result.parents[var] = 1 / (1 - var.val ** 2)
+    result.parents[var] = var.children[result] = 1 / (1 - var.val ** 2)
     return result
 
 @vectorize
@@ -171,7 +171,7 @@ def exp(var):
     Returns variable representing exp applied to the input variable var
     """
     result = Scalar(np.exp(var.val))
-    result.parents[var] = np.exp(var.val)
+    result.parents[var] = var.children[result] = np.exp(var.val)
     return result
 
 @vectorize
@@ -181,7 +181,7 @@ def log(var, base=np.e):
     Base of log is optional with default base e
     """
     result = Scalar(np.log(var.val) / np.log(base))
-    result.parents[var] = 1 / (var.val * np.log(base))
+    result.parents[var] = var.children[result] = 1 / (var.val * np.log(base))
     return result
 
 @vectorize
