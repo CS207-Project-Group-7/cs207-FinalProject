@@ -51,8 +51,7 @@ class Scalar:
         Initializes Scalar object with numerical value val.
         """
         self.val = val
-        self._forward_cache = {self: seed}
-        self._backward_cache = {self: seed}
+        self.grad_cache = {self: seed}
         self.parents = {}
         self.children = {}
 
@@ -72,12 +71,9 @@ class Scalar:
         for i, var in enumerate(args):
             if mode == 'forward':
                 self._forward(var)
-                result[i] = self._forward_cache[var]
-            elif mode == 'backward':
+            elif mode == 'reverse':
                 self._backward(var)
-                result[i] = self._backward_cache[var]
-            else:
-                raise ValueError('Invalid grad mode entered')
+            result[i] = self.grad_cache[var]
         return result
     
     def _forward(self, var):
@@ -85,31 +81,31 @@ class Scalar:
         Internal method for computing gradient with respect to variable var
         and storing the result in the gradient cache dictionary.
         """
-        if var not in self._forward_cache:
+        if var not in self.grad_cache:
             grad = 0
-            for parent_var, val in self.parents.items():
-                parent_var._forward(var)
-                grad += val * parent_var._forward_cache[var]
-            self._forward_cache[var] = grad
+            for parent, val in self.parents.items():
+                parent._forward(var)
+                grad += val * parent.grad_cache[var]
+            self.grad_cache[var] = grad
 
     def _backward(self, var):
         """
         Internal method for computing gradient with respect to variable var
         and storing the result in the gradient cache dictionary.
         """
-        if var not in self._backward_cache:
+        if var not in self.grad_cache:
             grad = 0
-            for child_var, val in self.children.items():
-                child_var._backward(var)
-                grad += val * child_var._backward_cache[var]
-            self._backward_cache[var] = grad
+            for child, val in var.children.items():
+                self._backward(child)
+                grad += val * self.grad_cache[child]
+            self.grad_cache[var] = grad    
 
     def __neg__(self):
         """
         Returns Scalar object representing negation of a Scalar object.
         """
         result = Scalar(-self.val)
-        result.parents[self] = -1.
+        result.parents[self] = self.children[result] = -1.
         return result
 
     def __abs__(self):
@@ -117,7 +113,7 @@ class Scalar:
         Returns Scalar object representing absolute value of a Scalar object.
         """
         result = Scalar(abs(self.val))
-        result.parents[self] = self.val / abs(self.val)
+        result.parents[self] = self.children[result] = self.val / abs(self.val)
         return result
 
     def __add__(self, other):
