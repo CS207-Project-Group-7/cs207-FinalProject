@@ -46,22 +46,24 @@ class Scalar:
     A class for lazydiff autograd scalar variables.
     """
 
-    def __init__(self, val, seed=1):
+    def __init__(self, val, seed=1.):
         """
         Initializes Scalar object with numerical value val.
         """
         self.val = val
         self.grad_cache = {self: seed}
+        self.grad_cache = collections.defaultdict(float)
+        self.grad_cache[self] = seed
         self.parents = {}
         self.children = {}
 
-    def __repr__(self):
-        return 'Scalar(%f)' % self.val
+    # def __repr__(self):
+    #     return 'Scalar(%f)' % self.val
 
     def __hash__(self):
         return id(self)
     
-    def grad(self, *args, mode='forward'):
+    def grad(self, *args):
         """
         Returns tuple representing gradient with respect to each variable
         provided as arguments.
@@ -69,36 +71,33 @@ class Scalar:
         args = _get_scalar_sequence(args) 
         result = np.zeros(len(args))
         for i, var in enumerate(args):
-            if mode == 'forward':
-                self._forward(var)
-            elif mode == 'reverse':
-                self._backward(var)
+            var.forward()
             result[i] = self.grad_cache[var]
         return result
     
-    def _forward(self, var):
-        """
-        Internal method for computing gradient with respect to variable var
-        and storing the result in the gradient cache dictionary.
-        """
-        if var not in self.grad_cache:
-            grad = 0
-            for parent, val in self.parents.items():
-                parent._forward(var)
-                grad += val * parent.grad_cache[var]
-            self.grad_cache[var] = grad
+    def forward(self):
+        queue = collections.deque([self])
+        while queue:
+            var = queue.popleft()
+            if self not in var.grad_cache:
+                grad = 0
+                for parent, val in var.parents.items():
+                    grad += val * parent.grad_cache[self]
+                var.grad_cache[self] = grad
+            for child in var.children:
+                queue.append(child)
 
-    def _backward(self, var):
-        """
-        Internal method for computing gradient with respect to variable var
-        and storing the result in the gradient cache dictionary.
-        """
-        if var not in self.grad_cache:
-            grad = 0
-            for child, val in var.children.items():
-                self._backward(child)
-                grad += val * self.grad_cache[child]
-            self.grad_cache[var] = grad    
+    def backward(self):
+        queue = collections.deque([self])
+        while queue:
+            var = queue.popleft()
+            if var not in self.grad_cache:
+                grad = 0
+                for child, val in var.children.items():
+                    grad += val * self.grad_cache[child]
+                self.grad_cache[var] = grad 
+            for parent in var.parents:
+                queue.append(parent)
 
     def __neg__(self):
         """
@@ -248,7 +247,7 @@ class Vector:
         or a sequence of Scalar objects args
         """
         self._components = _get_scalar_sequence(args) 
-        self.val = tuple([component.val for component in self._components])
+        self.val = np.array([component.val for component in self._components])
 
     def __repr__(self):
         return 'Vector(%s)' % str([component.val for component in self._components])
@@ -258,7 +257,13 @@ class Vector:
         Returns numpy array representing Jacobian
         with respect to each variable provided as arguments args
         """
-        return np.array([component.grad(*args) for component in self._components])      
+        return np.array([component.grad(*args) for component in self._components])
+
+    def forward(self):
+        [component.forward() for component in self._components]
+
+    def backward(self):
+        [component.backward() for component in self._components]      
 
     def __getitem__(self, ind):
         """

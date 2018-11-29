@@ -4,15 +4,15 @@ import numpy as np
 
 def test_init_vector_with_scalar():
     vec = Vector(Scalar(7.))
-    assert vec.val == (7.,)
+    assert np.all(vec.val == np.array([7.]))
 
 def test_init_vector_with_scalars():
     vec = Vector(Scalar(7.), Scalar(9.))
-    assert vec.val == (7., 9.)
+    assert np.all(vec.val == np.array([7., 9.]))
 
 def test_init_vector_with_ndarray():
     vec = Vector(np.array([Scalar(7.), Scalar(9.)]))
-    assert vec.val == (7., 9.)
+    assert np.all(vec.val == np.array([7., 9.]))
 
 def test_init_vector_fails_with_non_scalar():
     with pytest.raises(TypeError):
@@ -57,27 +57,27 @@ def test_get_vector_item_out_of_range_fails():
     
 def test_vector_negation():
     vec = Vector([Scalar(2.), Scalar(3.)])
-    assert (-vec).val == (-2., -3.)
+    assert np.all((-vec).val == np.array([-2., -3.]))
 
 def test_vector_abs():
     vec = Vector([Scalar(2.), Scalar(-3.)])
-    assert abs(vec).val == (2., 3.)
+    assert np.all(abs(vec).val == np.array([2., 3.]))
 
 def test_vector_add_number():
     vec = Vector([Scalar(1.), Scalar(2.)])
     added = vec + 2.
-    assert added.val == (3., 4.)
+    assert np.all(added.val == np.array([3., 4.]))
 
 def test_vector_add_scalar():
     vec = Vector([Scalar(1.), Scalar(2.)])
     added = vec + Scalar(2.)
-    assert added.val == (3., 4.)
+    assert np.all(added.val == np.array([3., 4.]))
 
 def test_vector_add_vector():
     vec = Vector([Scalar(1.), Scalar(2.)])
     vec2 = Vector([Scalar(3.), Scalar(4.)])
     added = vec + vec2
-    assert added.val == (4., 6.)
+    assert np.all(added.val == np.array([4., 6.]))
 
 def test_vector_add_vector_wrong_shape_fails():
     vec = Vector([Scalar(1.), Scalar(2.)])
@@ -93,24 +93,24 @@ def test_vector_add_vector_non_numeric():
 def test_vector_radd():
     vec = Vector([Scalar(1.), Scalar(2.)])
     added = 2. + vec
-    assert added.val == (3., 4.)
+    assert np.all(added.val == np.array([3., 4.]))
 
 def test_vector_subtract():
     vec = Vector([Scalar(1.), Scalar(2.)])
     added = vec - 2.
     print(added.val)
-    assert added.val == (-1., 0.)
+    assert np.all(added.val == np.array([-1., 0.]))
 
 def test_vector_rsub():
     vec = Vector([Scalar(1.), Scalar(2.)])
     added = 2. - vec
     print(added.val)
-    assert added.val == (1., 0.)
+    assert np.all(added.val == np.array([1., 0.]))
 
 def test_vector_mul_number():
     vec = Vector([Scalar(1.), Scalar(2.)])
     prod = vec * 2.
-    assert prod.val == (2., 4.)
+    assert np.all(prod.val == np.array([2., 4.]))
 
 def test_vector_mul_scalar():
     vec = Vector([Scalar(1.), Scalar(2.)])
@@ -122,7 +122,7 @@ def test_vector_mul_vector():
     vec = Vector([Scalar(1.), Scalar(2.)])
     vec2 = Vector([Scalar(2.), Scalar(3.)])
     prod = vec * vec2
-    assert prod.val == (2., 6.)
+    assert np.all(prod.val == np.array([2., 6.]))
 
 def test_vector_mul_vector_wrong_shape_fails():
     vec = Vector([Scalar(1.), Scalar(2.)])
@@ -138,12 +138,12 @@ def test_vector_mul_vector_non_numeric():
 def test_vector_rmul():
     vec = Vector([Scalar(1.), Scalar(2.)])
     prod = 2. * vec
-    assert prod.val == (2., 4.)
+    assert np.all(prod.val == np.array([2., 4.]))
 
 def test_vector_truediv():
     vec = Vector([Scalar(1.), Scalar(2.)])
     divided = vec / Scalar(2.)
-    assert divided.val == (.5, 1.)
+    assert np.all(divided.val == np.array([.5, 1.]))
 
 def test_vector_truediv_fails_with_divide_by_zero():
     vec = Vector([Scalar(1.), Scalar(2.)])
@@ -153,7 +153,7 @@ def test_vector_truediv_fails_with_divide_by_zero():
 def test_vector_rtruediv():
     vec = Vector([Scalar(1.), Scalar(2.)])
     divided = vec.__rtruediv__(Scalar(2.))
-    assert divided.val == (2., 1.)
+    assert np.all(divided.val == np.array([2., 1.]))
 
 def test_vector_rtruediv_fails_with_divide_by_zero():
     vec = Vector([Scalar(0.), Scalar(0.)])
@@ -163,7 +163,7 @@ def test_vector_rtruediv_fails_with_divide_by_zero():
 def test_vector_pow():
     vec = Vector([Scalar(1.), Scalar(2.)])
     powed = vec ** 2
-    assert powed.val == (1., 4.)
+    assert np.all(powed.val == np.array([1., 4.]))
 
 def test_vector_pow_scalar():
     vec = Vector([Scalar(1.), Scalar(2.)])
@@ -175,7 +175,7 @@ def test_vector_pow_vector():
     vec = Vector([Scalar(1.), Scalar(2.)])
     vec2 = Vector([Scalar(2.), Scalar(3.)])
     prod = vec ** vec2
-    assert prod.val == (1., 8.)
+    assert np.all(prod.val == np.array([1., 8.]))
 
 def test_vector_pow_vector_non_numeric():
     vec = Vector([Scalar(1.), Scalar(2.)])
@@ -185,7 +185,7 @@ def test_vector_pow_vector_non_numeric():
 def test_vector_rpow():
     vec = Vector([Scalar(1.), Scalar(2.)])
     prod = 2. ** vec
-    assert prod.val == (2., 4.)
+    assert np.all(prod.val == np.array([2., 4.]))
 
 def test_iadd_banned():
     var = Vector([Scalar(1.), Scalar(2.)])
