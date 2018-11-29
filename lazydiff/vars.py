@@ -51,14 +51,13 @@ class Scalar:
         Initializes Scalar object with numerical value val.
         """
         self.val = val
-        self.grad_cache = {self: seed}
         self.grad_cache = collections.defaultdict(float)
         self.grad_cache[self] = seed
         self.parents = {}
         self.children = {}
 
-    # def __repr__(self):
-    #     return 'Scalar(%f)' % self.val
+    def __repr__(self):
+        return 'Scalar(%f, seed=%f)' % (self.val, self.grad_cache[self])
 
     def __hash__(self):
         return id(self)
@@ -71,7 +70,7 @@ class Scalar:
         args = _get_scalar_sequence(args) 
         result = np.zeros(len(args))
         for i, var in enumerate(args):
-            var.forward()
+            var.forward() # this is only called so tests will work for the time being
             result[i] = self.grad_cache[var]
         return result
     
@@ -218,22 +217,22 @@ class Scalar:
         return result
 
     def __eq__(self, other):
-        return self.val == other.val
+        return isinstance(other, Scalar) and self.val == other.val
     
     def __ne__(self, other):
-        return self.val != other.val
+        return isinstance(other, Scalar) and self.val != other.val
 
     def __lt__(self, other):
-        return self.val < other.val
+        return isinstance(other, Scalar) and self.val < other.val
 
     def __gt__(self, other):
-        return self.val > other.val
+        return isinstance(other, Scalar) and self.val > other.val
 
     def __le_(self, other):
-        return self.val <= other.val
+        return isinstance(other, Scalar) and self.val <= other.val
 
     def __ge__(self, other):
-        return self.val >= other.val
+        return isinstance(other, Scalar) and self.val >= other.val
 
 @ban_in_place
 class Vector:
@@ -250,7 +249,7 @@ class Vector:
         self.val = np.array([component.val for component in self._components])
 
     def __repr__(self):
-        return 'Vector(%s)' % str([component.val for component in self._components])
+        return 'Vector(%s)' % ', '.join([repr(component) for component in self._components])
 
     def grad(self, *args):
         """
