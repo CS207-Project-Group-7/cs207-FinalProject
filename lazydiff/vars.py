@@ -46,16 +46,18 @@ class Scalar:
     A class for lazydiff autograd scalar variables.
     """
 
-    def __init__(self, val, seed=1):
+    def __init__(self, val, seed=1.):
         """
         Initializes Scalar object with numerical value val.
         """
         self.val = val
-        self._grad_cache = {self: 1}
+        self.grad_cache = collections.defaultdict(float)
+        self.grad_cache[self] = seed
         self.parents = {}
+        self.children = {}
 
     def __repr__(self):
-        return 'Scalar(%f)' % self.val
+        return 'Scalar(%f, seed=%f)' % (self.val, self.grad_cache[self])
 
     def __hash__(self):
         return id(self)
@@ -68,28 +70,40 @@ class Scalar:
         args = _get_scalar_sequence(args) 
         result = np.zeros(len(args))
         for i, var in enumerate(args):
-            self._compute_grad(var)
-            result[i] = self._grad_cache[var]
+            var.forward() # this is only called so tests will work for the time being
+            result[i] = self.grad_cache[var]
         return result
     
-    def _compute_grad(self, var):
-        """
-        Internal method for computing gradient with respect to variable var
-        and storing the result in the gradient cache dictionary.
-        """
-        if var not in self._grad_cache:
-            grad = 0
-            for parent_var, val in self.parents.items():
-                parent_var._compute_grad(var)
-                grad += val * parent_var._grad_cache[var]
-            self._grad_cache[var] = grad
+    def forward(self):
+        queue = collections.deque([self])
+        while queue:
+            var = queue.popleft()
+            if self not in var.grad_cache:
+                grad = 0
+                for parent, val in var.parents.items():
+                    grad += val * parent.grad_cache[self]
+                var.grad_cache[self] = grad
+            for child in var.children:
+                queue.append(child)
+
+    def backward(self):
+        queue = collections.deque([self])
+        while queue:
+            var = queue.popleft()
+            if var not in self.grad_cache:
+                grad = 0
+                for child, val in var.children.items():
+                    grad += val * self.grad_cache[child]
+                self.grad_cache[var] = grad 
+            for parent in var.parents:
+                queue.append(parent)
 
     def __neg__(self):
         """
         Returns Scalar object representing negation of a Scalar object.
         """
         result = Scalar(-self.val)
-        result.parents[self] = -1.
+        result.parents[self] = self.children[result] = -1.
         return result
 
     def __abs__(self):
@@ -97,7 +111,7 @@ class Scalar:
         Returns Scalar object representing absolute value of a Scalar object.
         """
         result = Scalar(abs(self.val))
-        result.parents[self] = self.val / abs(self.val)
+        result.parents[self] = self.children[result] = self.val / abs(self.val)
         return result
 
     def __add__(self, other):
@@ -107,12 +121,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val + other.val)
-            result.parents[self] = 1.
-            result.parents[other] = 1.
+            result.parents[self] = self.children[result] = 1.
+            result.parents[other] = other.children[result] = 1.
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(self.val + other)
-            result.parents[self] = 1.
+            result.parents[self] = self.children[result] = 1.
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Scalar object")
@@ -145,12 +159,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val * other.val)
-            result.parents[self] = other.val
-            result.parents[other] = self.val
+            result.parents[self] = self.children[result] = other.val
+            result.parents[other] = other.children[result] = self.val
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(other * self.val)
-            result.parents[self] = other
+            result.parents[self] = self.children[result] = other
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Scalar object")
@@ -183,12 +197,12 @@ class Scalar:
         """
         if isinstance(other, Scalar):
             result = Scalar(self.val ** other.val)
-            result.parents[self] = other.val * self.val ** (other.val - 1)
-            result.parents[other] = math.log(self.val) * self.val ** other.val
+            result.parents[self] = self.children[result] = other.val * self.val ** (other.val - 1)
+            result.parents[other] = other.children[result] = math.log(self.val) * self.val ** other.val
             return result
         elif isinstance(other, numbers.Number):
             result = Scalar(self.val ** other)
-            result.parents[self] = other * self.val ** (other - 1)
+            result.parents[self] = self.children[result] = other * self.val ** (other - 1)
             return result
         else:
             raise TypeError("Input needs to be a numeric value or Scalar object")
@@ -199,26 +213,26 @@ class Scalar:
         object with a Python number
         """
         result = Scalar(other ** self.val)
-        result.parents[self] = math.log(other) * other ** self.val
+        result.parents[self] = self.children[result] = math.log(other) * other ** self.val
         return result
 
     def __eq__(self, other):
-        return self.val == other.val
+        return isinstance(other, Scalar) and self.val == other.val
     
     def __ne__(self, other):
-        return self.val != other.val
+        return isinstance(other, Scalar) and self.val != other.val
 
     def __lt__(self, other):
-        return self.val < other.val
+        return isinstance(other, Scalar) and self.val < other.val
 
     def __gt__(self, other):
-        return self.val > other.val
+        return isinstance(other, Scalar) and self.val > other.val
 
     def __le_(self, other):
-        return self.val <= other.val
+        return isinstance(other, Scalar) and self.val <= other.val
 
     def __ge__(self, other):
-        return self.val >= other.val
+        return isinstance(other, Scalar) and self.val >= other.val
 
 @ban_in_place
 class Vector:
@@ -232,17 +246,23 @@ class Vector:
         or a sequence of Scalar objects args
         """
         self._components = _get_scalar_sequence(args) 
-        self.val = tuple([component.val for component in self._components])
+        self.val = np.array([component.val for component in self._components])
 
     def __repr__(self):
-        return 'Vector(%s)' % str([component.val for component in self._components])
+        return 'Vector(%s)' % ', '.join([repr(component) for component in self._components])
 
     def grad(self, *args):
         """
         Returns numpy array representing Jacobian
         with respect to each variable provided as arguments args
         """
-        return np.array([component.grad(*args) for component in self._components])      
+        return np.array([component.grad(*args) for component in self._components])
+
+    def forward(self):
+        [component.forward() for component in self._components]
+
+    def backward(self):
+        [component.backward() for component in self._components]      
 
     def __getitem__(self, ind):
         """
