@@ -91,7 +91,7 @@ def test_log():
 def test_logistic():
     var1 = vars.Scalar(0)
     var2 = ops.logistic(var1)
-    assert var2.val == pytest.approx(1)
+    assert var2.val == pytest.approx(0.5)
 
 def test_sqrt():
     var1 = vars.Scalar(4)
