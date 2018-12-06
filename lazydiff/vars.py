@@ -93,7 +93,7 @@ class Scalar:
         while queue:
             var = queue.popleft()
             if var not in self.grad_cache:
-                grad = np.zeros_like(var.val)
+                grad = np.zeros_like(self.val)
                 for child, val in var.children.items():
                     if child in self.grad_cache:
                         grad += val * self.grad_cache[child]
