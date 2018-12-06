@@ -95,7 +95,7 @@ class Scalar:
             if var not in self.grad_cache:
                 grad = np.zeros_like(var.val)
                 for child, val in var.children.items():
-                    if self in parent.grad_cache:
+                    if child in self.grad_cache:
                         grad += val * self.grad_cache[child]
                 self.grad_cache[var] = grad 
             for parent in var.parents:
