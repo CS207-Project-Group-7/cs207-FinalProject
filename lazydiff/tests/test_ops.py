@@ -88,6 +88,16 @@ def test_log():
     assert var2.val == pytest.approx(0)
     assert var2.grad(var1) == np.array([1])
 
+def test_logistic():
+    var1 = vars.Scalar(0)
+    var2 = ops.logistic(var1)
+    assert var2.val == pytest.approx(1)
+
+def test_sqrt():
+    var1 = vars.Scalar(4)
+    var2 = ops.sqrt(var1)
+    assert var2.val == pytest.approx(2)
+
 def test_neg():
     var1 = vars.Scalar(1)
     var2 = ops.neg(var1)
