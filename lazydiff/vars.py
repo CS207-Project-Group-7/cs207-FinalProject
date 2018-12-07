@@ -73,30 +73,42 @@ class Scalar:
             var.forward() # this is only called so tests will work for the time being
             result[i] = self.grad_cache[var]
         return result
+
+    def _forward_visit(self, var, top_sort, seen):
+        seen.add(var)
+        for child in var.children.keys():
+            if child not in seen:
+                self._forward_visit(child, top_sort, seen)
+        top_sort.appendleft(var)
+
+    def _backward_visit(self, var, top_sort, seen):
+        seen.add(var)
+        for parent in var.parents.keys():
+            if parent not in seen:
+                self._backward_visit(parent, top_sort, seen)
+        top_sort.appendleft(var)
     
     def forward(self):
-        queue = collections.deque([self])
-        while queue:
-            var = queue.popleft()
+        top_sort = collections.deque()
+        self._forward_visit(self, top_sort, set())
+        while top_sort:
+            var = top_sort.popleft()
             if self not in var.grad_cache:
                 grad = 0
                 for parent, val in var.parents.items():
                     grad += val * parent.grad_cache[self]
                 var.grad_cache[self] = grad
-            for child in var.children:
-                queue.append(child)
-
+           
     def backward(self):
-        queue = collections.deque([self])
-        while queue:
-            var = queue.popleft()
+        top_sort = collections.deque()
+        self._backward_visit(self, top_sort, set())
+        while top_sort:
+            var = top_sort.popleft()
             if var not in self.grad_cache:
                 grad = 0
                 for child, val in var.children.items():
                     grad += val * self.grad_cache[child]
                 self.grad_cache[var] = grad 
-            for parent in var.parents:
-                queue.append(parent)
 
     def __neg__(self):
         """
