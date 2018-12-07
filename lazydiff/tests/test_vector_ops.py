@@ -1,6 +1,6 @@
 import pytest
 import math
-from lazydiff.vars import Vector, Scalar
+from lazydiff.vars import Scalar
 import lazydiff.ops as ops
 import numpy as np
 import pytest

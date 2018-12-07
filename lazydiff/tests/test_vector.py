@@ -1,5 +1,5 @@
 import pytest
-from lazydiff.vars import Vector, Scalar
+from lazydiff.vars import Scalar
 import numpy as np
 
 def test_init_vector_with_scalar():
