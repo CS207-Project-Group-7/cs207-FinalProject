@@ -257,6 +257,8 @@ class Vector:
         Initializes Scalar object with arguments of Scalar objects
         or a sequence of Scalar objects args
         """
+        if len(args)==1 and isinstance(args[0], np.ndarray) or isinstance(args[0], list) and not isinstance(args[0][0], Scalar):
+            return self.__init__([Scalar(val) for val in args[0]])
         self._components = _get_scalar_sequence(args) 
         self.val = np.array([component.val for component in self._components])
 
@@ -280,9 +282,12 @@ class Vector:
         """
         Returns a Scalar object in the given index
         """
-        if ind not in range(len(self)):
-            raise IndexError
+        #if ind not in range(len(self)):
+        #    raise IndexError
         return self._components[ind]
+
+    def __setitem__(self, ind, value):
+        self._components[ind] = value
 
     def __len__(self):
         """
@@ -312,6 +317,9 @@ class Vector:
         elif isinstance(other, Vector):
             self._check_broadcast(other)
             return Vector([op(comp1, comp2) for comp1, comp2 in zip(self._components, other._components)])
+        elif isinstance(other, list) or isinstance(other, np.ndarray):
+            self._check_broadcast(other)
+            return Vector([op(comp1, val2) for comp1, val2 in zip(self._components, other)])
         else:
             raise TypeError("Input needs to be a numeric value, Scalar object, or Vector object")
 
