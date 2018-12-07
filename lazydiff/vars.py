@@ -82,8 +82,6 @@ class Var:
                     if child in self.grad_cache:
                         grad += factor * self.grad_cache[child]
                 self.grad_cache[var] = grad 
-            for parent, _ in var.parents:
-                queue.append(parent)
 
     def _check_numeric(self, other):
         if isinstance(other, numbers.Number):
