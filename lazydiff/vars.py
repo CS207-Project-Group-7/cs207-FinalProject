@@ -38,7 +38,6 @@ class Var:
         """
         if not isinstance(var, Var):
             raise TypeError('Inputs needs to be Var object.')
-        self.backward()
         if var not in self.grad_val:
             raise ValueError('Variable does not depend on input var. Make sure you have run forward/backward.')
         return self.grad_val[var]
