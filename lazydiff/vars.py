@@ -15,12 +15,12 @@ class Var:
         Initializes Var object with numerical value val.
         """
         self.val = np.array(val, dtype='float')
-        self.grad_cache = {self: seed}
+        self.grad_val = {self: seed}
         self.parents = {}
         self.children = {}
 
     def __repr__(self):
-        return 'Var({}, seed={})'.format(repr(self.val.tolist()), repr(self.grad_cache[self].tolist()))
+        return 'Var({}, seed={})'.format(repr(self.val.tolist()), repr(self.grad_val[self].tolist()))
 
     def __len__(self):
         return len(self.val)
@@ -40,9 +40,9 @@ class Var:
         result = []
         for i, var in enumerate(args):
             var.forward()
-            if var not in self.grad_cache:
+            if var not in self.grad_val:
                 raise ValueError('Variable does not depend on arg {}'.format(i + 1))
-            result.append(self.grad_cache[var])
+            result.append(self.grad_val[var])
         return result
 
     def _forward_visit(self, var, top_sort, seen):
@@ -64,24 +64,24 @@ class Var:
         self._forward_visit(self, top_sort, set())
         while top_sort:
             var = top_sort.popleft()
-            if self not in var.grad_cache:
+            if not var is self:
                 grad = np.zeros_like(self.val)
                 for parent, factor in var.parents.items():
-                    if self in parent.grad_cache:
-                        grad += factor * parent.grad_cache[self]
-                var.grad_cache[self] = grad
+                    if self in parent.grad_val:
+                        grad += factor * parent.grad_val[self]
+                var.grad_val[self] = grad
 
     def backward(self):
         top_sort = collections.deque()
         self._backward_visit(self, top_sort, set())
         while top_sort:
             var = top_sort.popleft()
-            if var not in self.grad_cache:
+            if not var is self:
                 grad = np.zeros_like(var.val)
                 for child, factor in var.children.items():
-                    if child in self.grad_cache:
-                        grad += factor * self.grad_cache[child]
-                self.grad_cache[var] = grad 
+                    if child in self.grad_val:
+                        grad += factor * self.grad_val[child]
+                self.grad_val[var] = grad 
 
     def _check_numeric(self, other):
         if isinstance(other, numbers.Number):
