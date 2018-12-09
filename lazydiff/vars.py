@@ -5,29 +5,6 @@ import numbers
 
 np.seterr(all='raise')
 
-def _check_scalar_sequence(args):
-    """
-    Returns a bool about whether all arguments
-    are Var instances
-    """
-    return np.all([isinstance(arg, Var) for arg in args])
-
-def _get_scalar_sequence(args):
-    """
-    Returns a bool about whether the arguments
-    are Var instances or sequence of Var
-    """
-    if args == ():
-        raise ValueError('Cannot pass in empty argument')
-    # checks if arguments are Var
-    if _check_scalar_sequence(args):
-        return args
-    # checks if sequence of Var
-    elif len(args) == 1 and _check_scalar_sequence(args[0]):
-        return tuple(args[0])
-    else:
-        raise TypeError("Inputs need to be Var objects or a sequence of Var objects")
-
 class Var:
     """
     A class for lazydiff autograd scalar variables.
@@ -38,12 +15,12 @@ class Var:
         Initializes Var object with numerical value val.
         """
         self.val = np.array(val, dtype='float')
-        self.grad_cache = {self: seed}
-        self.parents = collections.deque()
-        self.children = collections.deque()
+        self.grad_val = {self: seed}
+        self.parents = {}
+        self.children = {}
 
     def __repr__(self):
-        return 'Var({}, seed={})'.format(repr(self.val.tolist()), repr(self.grad_cache[self].tolist()))
+        return 'Var({}, seed={})'.format(repr(self.val.tolist()), repr(self.grad_val[self].tolist()))
 
     def __len__(self):
         return len(self.val)
@@ -56,65 +33,79 @@ class Var:
         Returns tuple representing gradient with respect to each variable
         provided as arguments.
         """
-        args = _get_scalar_sequence(args) 
+        if args == ():
+            raise ValueError('Cannot pass in empty argument')
+        if not np.all([isinstance(arg, Var) for arg in args]):
+            raise TypeError("Inputs need to be Var objects or a sequence of Var objects")
         result = []
         for i, var in enumerate(args):
             var.forward()
-            if var not in self.grad_cache:
+            if var not in self.grad_val:
                 raise ValueError('Variable does not depend on arg {}'.format(i + 1))
-            result.append(self.grad_cache[var])
+            result.append(self.grad_val[var])
         return result
+
+    def _forward_visit(self, var, top_sort, seen):
+        seen.add(var)
+        for child in var.children.keys():
+            if child not in seen:
+                self._forward_visit(child, top_sort, seen)
+        top_sort.appendleft(var)
+
+    def _backward_visit(self, var, top_sort, seen):
+        seen.add(var)
+        for parent in var.parents.keys():
+            if parent not in seen:
+                self._backward_visit(parent, top_sort, seen)
+        top_sort.appendleft(var)
     
     def forward(self):
-        queue = collections.deque([self])
-        while queue:
-            var = queue.popleft()
-            if self not in var.grad_cache:
+        top_sort = collections.deque()
+        self._forward_visit(self, top_sort, set())
+        while top_sort:
+            var = top_sort.popleft()
+            if not var is self:
                 grad = np.zeros_like(self.val)
-                for parent, factor in var.parents:
-                    if self in parent.grad_cache:
-                        grad += factor * parent.grad_cache[self]
-                var.grad_cache[self] = grad
-            for child, _ in var.children:
-                queue.append(child)
+                for parent, factor in var.parents.items():
+                    if self in parent.grad_val:
+                        grad += factor * parent.grad_val[self]
+                var.grad_val[self] = grad
 
     def backward(self):
-        queue = collections.deque([self])
-        while queue:
-            var = queue.popleft()
-            if var not in self.grad_cache:
+        top_sort = collections.deque()
+        self._backward_visit(self, top_sort, set())
+        while top_sort:
+            var = top_sort.popleft()
+            if not var is self:
                 grad = np.zeros_like(var.val)
-                for child, factor in var.children:
-                    if child in self.grad_cache:
-                        grad += factor * self.grad_cache[child]
-                self.grad_cache[var] = grad 
-            for parent, _ in var.parents:
-                queue.append(parent)
+                for child, factor in var.children.items():
+                    if child in self.grad_val:
+                        grad += factor * self.grad_val[child]
+                self.grad_val[var] = grad 
 
-    def __getitem__(self, i):
-        result = Var(self.val[i])
-        factor = np.eye(len(self))[i]
-        result.parents.append((self, factor))
-        self.children.appendleft((result, factor))
-        return result
+    def _check_numeric(self, other):
+        if isinstance(other, numbers.Number):
+            return
+        if isinstance(other, np.ndarray) and np.issubdtype(other.dtype, np.number):
+            if all(m == n or m == 1 or n == 1 for m, n in zip(self.val.shape[::-1], other.shape[::-1])):
+                return
+            raise ValueError('Cannot broadcast between shapes')
+        raise TypeError("Input needs to be a numeric value, numpy array of numeric values, or Var object")
 
     def __neg__(self):
         """
         Returns Var object representing negation of a Var object.
         """
         result = Var(-self.val)
-        result.parents.append((self, -1.))
-        self.children.appendleft((result, -1.))
+        result.parents[self] = self.children[result] = -1.
         return result
 
     def __abs__(self):
         """
         Returns Var object representing absolute value of a Var object.
         """
-        result = Var(np.abs(self.val))
-        factor = self.val / np.abs(self.val)
-        result.parents.append((self, factor))
-        self.children.appendleft((result, factor)) 
+        result = Var(abs(self.val))
+        result.parents[self] = self.children[result] = self.val / abs(self.val)
         return result
 
     def __add__(self, other):
@@ -124,18 +115,13 @@ class Var:
         """
         if isinstance(other, Var):
             result = Var(self.val + other.val)
-            result.parents.append((self, 1.))
-            result.parents.append((other, 1.))
-            self.children.appendleft((result, 1.))
-            other.children.appendleft((result, 1.))
+            result.parents[self] = self.children[result] = 1.
+            result.parents[other] = other.children[result] = 1.
             return result
-        elif isinstance(other, numbers.Number) or isinstance(other, np.ndarray):
-            result = Var(self.val + other)
-            result.parents.append((self, 1.))
-            self.children.appendleft((result, 1.))
-            return result
-        else:
-            raise TypeError("Input needs to be a numeric value or Var object")
+        self._check_numeric(other)
+        result = Var(self.val + other)
+        result.parents[self] = self.children[result] = 1.
+        return result
 
     def __radd__(self, other):
         """
@@ -165,18 +151,13 @@ class Var:
         """
         if isinstance(other, Var):
             result = Var(self.val * other.val)
-            result.parents.append((self, other.val))
-            result.parents.append((other, self.val))
-            self.children.appendleft((result, self.val))
-            other.children.appendleft((result, other.val))
+            result.parents[self] = self.children[result] = other.val
+            result.parents[other] = other.children[result] = self.val
             return result
-        elif isinstance(other, numbers.Number) or isinstance(other, np.ndarray):
-            result = Var(other * self.val)
-            result.parents.append((self, other))
-            self.children.appendleft((result, other))
-            return result
-        else:
-            raise TypeError("Input needs to be a numeric value or Var object")
+        self._check_numeric(other)
+        result = Var(other * self.val)
+        result.parents[self] = self.children[result] = other
+        return result
     
     def __rmul__(self, other):
         """
@@ -206,31 +187,22 @@ class Var:
         """
         if isinstance(other, Var):
             result = Var(self.val ** other.val)
-            self_factor = other.val * self.val ** (other.val - 1)
-            other_factor = math.log(self.val) * self.val ** other.val
-            result.parents.append((self, self_factor))
-            result.parents.append((other, other_factor))
-            self.children.appendleft((result, self_factor))
-            other.children.appendleft((result, other_factor))
+            result.parents[self] = self.children[result] = other.val * self.val ** (other.val - 1)
+            result.parents[other] = other.children[result] = math.log(self.val) * self.val ** other.val
             return result
-        elif isinstance(other, numbers.Number):
-            result = Var(self.val ** other)
-            factor = other * self.val ** (other - 1)
-            result.parents.append((self, factor))
-            self.children.appendleft((result, factor))
-            return result
-        else:
-            raise TypeError("Input needs to be a numeric value or Var object")
+        self._check_numeric(other)
+        result = Var(self.val ** other)
+        result.parents[self] = self.children[result] = other * self.val ** (other - 1)
+        return result
 
     def __rpow__(self, other):
         """
         Returns Var object representing right exponentiation of a Var 
         object with a Python number
         """
+        self._check_numeric(other)
         result = Var(other ** self.val)
-        factor = math.log(other) * other ** self.val
-        result.parents.append((self, factor))
-        self.children.appendleft((result, factor))
+        result.parents[self] = self.children[result] = math.log(other) * other ** self.val
         return result
 
     def __eq__(self, other):
