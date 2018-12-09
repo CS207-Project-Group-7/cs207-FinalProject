@@ -151,14 +151,23 @@ def log(var, base=np.e):
     return result
 
 def logistic(var):
-    return 1 / (1 + exp(-var))
+    """
+    Returns variable representing sigmoid applied to input variable var
+    """
+    return (1 + exp(-var)) ** -1
 
 def sqrt(var):
+    """
+    Returns variable representing square root applied to input variable var
+    """
     return var ** 0.5
 
 def sum(var):
+    """
+    Returns variable representing the sum of the components of input variable var
+    """
     result = Var(np.sum(var.val))
-    result.parents[var] = var.children[result] = np.ones(len(var))
+    result.parents[var] = var.children[result] = np.ones_like(var.val)
     return result
 
 def neg(var):

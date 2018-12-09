@@ -20,50 +20,48 @@ class Var:
         self.children = {}
 
     def __repr__(self):
+        """
+        Returns string representation of Var object
+        """
         return 'Var({}, seed={})'.format(repr(self.val.tolist()), repr(self.grad_val[self].tolist()))
 
-    def __len__(self):
-        return len(self.val)
-
     def __hash__(self):
+        """
+        Computes hash of Var object
+        """
         return id(self)
-    
-    def grad(self, *args):
+
+    def grad(self, var):
         """
-        Returns tuple representing gradient with respect to each variable
-        provided as arguments.
+        Returns numpy array representing gradient with respect to variable var.
+        Raises error if self does not depend on variable var.
         """
-        if args == ():
-            raise ValueError('Cannot pass in empty argument')
-        if not np.all([isinstance(arg, Var) for arg in args]):
-            raise TypeError("Inputs need to be Var objects or a sequence of Var objects")
-        result = []
-        for i, var in enumerate(args):
-            var.forward()
-            if var not in self.grad_val:
-                raise ValueError('Variable does not depend on arg {}'.format(i + 1))
-            result.append(self.grad_val[var])
-        return result
+        if not isinstance(var, Var):
+            raise TypeError('Inputs needs to be Var object.')
+        self.backward()
+        if var not in self.grad_val:
+            raise ValueError('Variable does not depend on input var. Make sure you have run forward/backward.')
+        return self.grad_val[var]
 
     def _forward_visit(self, var, top_sort, seen):
+        """
+        Gets topological order for visiting nodes in forward.
+        """
         seen.add(var)
         for child in var.children.keys():
             if child not in seen:
                 self._forward_visit(child, top_sort, seen)
         top_sort.appendleft(var)
-
-    def _backward_visit(self, var, top_sort, seen):
-        seen.add(var)
-        for parent in var.parents.keys():
-            if parent not in seen:
-                self._backward_visit(parent, top_sort, seen)
-        top_sort.appendleft(var)
     
     def forward(self):
+        """
+        Propagates gradients forward from this variable.
+        Before making any call var.grad(self), where var is a variable that
+        depends on self, either need to run self.forward() or var.backward().
+        """
         top_sort = collections.deque()
         self._forward_visit(self, top_sort, set())
-        while top_sort:
-            var = top_sort.popleft()
+        for var in top_sort:
             if not var is self:
                 grad = np.zeros_like(self.val)
                 for parent, factor in var.parents.items():
@@ -71,11 +69,25 @@ class Var:
                         grad += factor * parent.grad_val[self]
                 var.grad_val[self] = grad
 
+    def _backward_visit(self, var, top_sort, seen):
+        """
+        Gets topological order for visiting nodes in backward.
+        """
+        seen.add(var)
+        for parent in var.parents.keys():
+            if parent not in seen:
+                self._backward_visit(parent, top_sort, seen)
+        top_sort.appendleft(var)
+
     def backward(self):
+        """
+        Propagates gradients backward from this variable.
+        Before making any call self.grad(var), where var is a variable on which
+        self depends, either need to run self.backward() or var.forward().
+        """
         top_sort = collections.deque()
         self._backward_visit(self, top_sort, set())
-        while top_sort:
-            var = top_sort.popleft()
+        for var in top_sort:
             if not var is self:
                 grad = np.zeros_like(var.val)
                 for child, factor in var.children.items():
@@ -84,13 +96,12 @@ class Var:
                 self.grad_val[var] = grad 
 
     def _check_numeric(self, other):
-        if isinstance(other, numbers.Number):
-            return
-        if isinstance(other, np.ndarray) and np.issubdtype(other.dtype, np.number):
-            if all(m == n or m == 1 or n == 1 for m, n in zip(self.val.shape[::-1], other.shape[::-1])):
-                return
-            raise ValueError('Cannot broadcast between shapes')
-        raise TypeError("Input needs to be a numeric value, numpy array of numeric values, or Var object")
+        """
+        Checks if given object is of numeric type or is a numpy array of numeric types
+        """
+        if not isinstance(other, numbers.Number) and not (isinstance(other, np.ndarray) 
+            and np.issubdtype(other.dtype, np.number)):
+            raise TypeError("Input needs to be numeric value, numpy array of numeric values, or Var object")
 
     def __neg__(self):
         """
@@ -205,41 +216,88 @@ class Var:
         result.parents[self] = self.children[result] = math.log(other) * other ** self.val
         return result
 
-    def __eq__(self, other):
-        return isinstance(other, Var) and np.all(self.val == other.val)
-    
-    def __ne__(self, other):
-        return isinstance(other, Var) and np.all(self.val != other.val)
-
-    def __lt__(self, other):
-        return isinstance(other, Var) and np.all(self.val < other.val)
-
-    def __gt__(self, other):
-        return isinstance(other, Var) and np.all(self.val > other.val)
-
-    def __le_(self, other):
-        return isinstance(other, Var) and np.all(self.val <= other.val)
-
-    def __ge__(self, other):
-        return isinstance(other, Var) and np.all(self.val >= other.val)
-
-    def _in_place_error():
+    def _in_place_error(self):
         """
         Raises error for in-place operations
         """
         raise TypeError("In-place operations are not supported for lazydiff variables.")
 
-    def __iadd__(self):
-        _in_place_error()
+    def __iadd__(self, other):
+        """
+        Ban in-place addition for Var objects
+        """
+        self._in_place_error()
 
-    def __isub__(self):
-        _in_place_error()
+    def __isub__(self, other):
+        """
+        Ban in-place subtraction for Var objects.
+        """
+        self._in_place_error()
 
-    def __imul__(self):
-        _in_place_error()
+    def __imul__(self, other):
+        """
+        Ban in-place multiplication for Var objects.
+        """
+        self._in_place_error()
 
-    def __itruediv__(self):
-        _in_place_error()
+    def __itruediv__(self, other):
+        """
+        Ban in-place division for Var objects.
+        """
+        self._in_place_error()
 
-    def __ipow__(self):
-        _in_place_error()
+    def __ipow__(self, other):
+        """
+        Ban in-place exponentiation for Var objects.
+        """
+        self._in_place_error()
+
+    def _comparison(self, other, op):
+        """
+        Performs comparison for given comparison op between Var object and another object
+        """
+        if isinstance(other, Var):
+            return op(self, other)
+        return False
+
+    def __eq__(self, other):
+        """
+        Checks if Var object is equal to another object. 
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        self._comparison(other, np.array.__eq__)
+    
+    def __ne__(self, other):
+        """
+        Checks if Var object is not equal to another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        self._comparison(other, np.array.__ne__)
+
+    def __lt__(self, other):
+        """
+        Checks if Var object is less than another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        self._comparison(other, np.array.__lt__)
+
+    def __gt__(self, other):
+        """
+        Checks if Var object is greater than another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        self._comparison(other, np.array.__gt__)
+
+    def __le_(self, other):
+        """
+        Checks if Var object is less than or equal to another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        self._comparison(other, np.array.__le__)
+
+    def __ge__(self, other):
+        """
+        Checks if Var object is greater than or equal to another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        self._comparison(other, np.array.__ge__)
