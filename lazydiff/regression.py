@@ -26,7 +26,7 @@ def MSE_regularized(X, y, m, b, p = 1, C = 1):
     loss = Var(0)
     for vec,y_i in zip(X,y):
         loss = loss + (ops.sum(m*vec)+b-y_i)**2
-    return loss/(2*len(X)) + C*ops.norm(m, p=p)
+    return loss/(2*len(X)) + C*ops.norm(m, p=p)**p
 
 def lasso_loss(X, y, m, b, C = 1):
     """
@@ -49,7 +49,7 @@ def ridge_loss(X, y, m, b, C = 1):
     loss = Var(0)
     for vec, y_i in zip(X,y):
         loss = loss + (ops.sum(m*vec)+b-y_i)**2
-    return loss + C*ops.pow_sum(m,2)
+    return loss + C*ops.norm(m,2)**2
 
 def elastic_loss(X, y, m, b, C = 1, l1_ratio = 0.5):
     """
@@ -63,7 +63,7 @@ def elastic_loss(X, y, m, b, C = 1, l1_ratio = 0.5):
     loss = Var(0)
     for vec,y_i in zip(X,y):
         loss = loss + (ops.sum(m*vec)+b-y_i)**2
-    return loss/(2*len(X)) + C*l1_ratio*ops.norm(m, p=1) + 0.5*C*(1-l1_ratio)*ops.pow_sum(m,2)
+    return loss/(2*len(X)) + C*l1_ratio*ops.norm(m, p=1) + 0.5*C*(1-l1_ratio)*ops.norm(m,2)**2
 
 def gradient_descent(X, y, loss_function, m, b, lr = 0.1, forward = True):
     """ Performs one single update step of gradient descent

@@ -168,7 +168,13 @@ def sum(var):
     """
     result = Var(np.sum(var.val))
     result.parents[var] = var.children[result] = np.ones_like(var.val)
-    return result
+    return result    
+
+def norm(var, p=1):
+    """
+    Returns variable representing L-p norm of input variable var
+    """
+    return sum(abs(var) ** p) ** (1 / p)
 
 def neg(var):
     """
@@ -211,18 +217,3 @@ def abs(var):
     Wrapper function for __abs__
     """
     return var.__abs__()
-
-def pow_sum(var, p = 1):
-    """
-    Wrapper function for sum of vec_i^p
-    """
-    if (p%2==0):
-        return sum(var**p)
-    else:
-        return sum(abs(var)**p)
-
-def norm(var, p = 1):
-    """
-    Wrapper function for L-p norm of var
-    """
-    return pow_sum(var, p)**1/p
