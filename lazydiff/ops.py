@@ -211,3 +211,18 @@ def abs(var):
     Wrapper function for __abs__
     """
     return var.__abs__()
+
+def pow_sum(var, p = 1):
+    """
+    Wrapper function for sum of vec_i^p
+    """
+    if (p%2==0):
+        return sum(var**p)
+    else:
+        return sum(abs(var)**p)
+
+def norm(var, p = 1):
+    """
+    Wrapper function for L-p norm of var
+    """
+    return pow_sum(var, p)**1/p
