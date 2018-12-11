@@ -168,7 +168,13 @@ def sum(var):
     """
     result = Var(np.sum(var.val))
     result.parents[var] = var.children[result] = np.ones_like(var.val)
-    return result
+    return result    
+
+def norm(var, p=1):
+    """
+    Returns variable representing L-p norm of input variable var
+    """
+    return sum(abs(var) ** p) ** (1 / p)
 
 def neg(var):
     """
