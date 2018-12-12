@@ -143,3 +143,19 @@ def test_rpow_vars_forward():
     x.forward()
     assert y.val == np.e ** 3
     assert np.all(y.grad(x) == np.array([np.e ** 3]))
+
+def test_composite1():
+    x1 = Var(-3)
+    x2 = Var(5)
+    x3 = Var(10)
+    y = abs(x1) / x2 * x3
+    x1.forward()
+    assert y.grad(x1) == -2.
+
+def test_composite2():
+    x1 = Var(-3)
+    x2 = Var(5)
+    x3 = Var(1)
+    y = x2**x1 / x3
+    x3.forward()
+    assert y.grad(x3) == -.008

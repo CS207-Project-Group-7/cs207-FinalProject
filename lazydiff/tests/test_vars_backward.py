@@ -259,3 +259,19 @@ def test_vars_not_linked_fails():
     with pytest.raises(ValueError):
         y.backward()
         y.grad(x)
+
+def test_composite1():
+    x1 = Var(-3)
+    x2 = Var(5)
+    x3 = Var(10)
+    y = abs(x1) / x2 * x3
+    y.backward()
+    assert y.grad(x1) == -2.
+
+def test_composite2():
+    x1 = Var(-3)
+    x2 = Var(5)
+    x3 = Var(1)
+    y = x2**x1 / x3
+    y.backward()
+    assert y.grad(x3) == -.008

@@ -187,3 +187,18 @@ def test_norm():
     var2.backward()
     assert var2.val == np.linalg.norm(var1.val)
     assert np.all(var2.grad(var1) == [1/np.sqrt(14), np.sqrt(2/7), 3/np.sqrt(14)])
+
+def test_composite_logexp():
+    x = Var([5, 10, 15, 20])
+    y = ops.log(ops.exp(x))
+    y.backward()
+    assert np.all(x == y)
+    assert np.all(y.grad(x) == 1)
+
+def test_composite_trig():
+    x = Var([5, 10, 15, 20])
+    x2 = ops.sin(x) / ops.cos(x)
+    x3 = ops.tan(x)
+    x.forward()
+    assert np.all(x2 == x3)
+    assert np.all(x2.grad(x) == x3.grad(x))

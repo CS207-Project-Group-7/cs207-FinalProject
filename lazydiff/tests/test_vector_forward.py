@@ -202,3 +202,19 @@ def test_ipow_banned():
     x = Var([1, 2, 3])
     with pytest.raises(TypeError):
         x **= 3
+
+def test_composite1():
+    x1 = Var(-3)
+    x2 = Var([5, 10])
+    x3 = Var([10, 100])
+    y = abs(x1) / x2 * x3
+    x1.forward()
+    assert np.all(y.grad(x1) == [-2, -10])
+
+def test_composite2():
+    x1 = Var(-3)
+    x2 = Var([5, 10])
+    x3 = Var([1, 1])
+    y = x2**x1 / x3
+    x3.forward()
+    assert np.all(y.grad(x3) == [-.008, -.001])
