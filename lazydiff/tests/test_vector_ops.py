@@ -200,5 +200,5 @@ def test_composite_trig():
     x2 = ops.sin(x) / ops.cos(x)
     x3 = ops.tan(x)
     x.forward()
-    assert np.all(x2 == x3)
+    assert np.all(x2.val == pytest.approx(x3.val))
     assert np.all(x2.grad(x) == x3.grad(x))
