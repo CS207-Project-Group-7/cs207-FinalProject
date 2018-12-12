@@ -9,46 +9,30 @@
 
 ## Full Documentation
 
-See [Documentation](docs/Documentation.ipynb) for full documentation and current progress.
+See [Documentation](docs/documentation.ipynb) for full documentation and current progress.
 
 ## Installing
 
 The easy way using pip:
+
 - `pip install lazydiff`
 
-You can run the following to install the dependencies:
-- `pip install -r requirements.txt`
+You can also execute following command to install LazyDiff and its dependencies:
 
-Then execute following command to install LazyDiff and its dependencies:
- - `pip install git+https://github.com/CS207-Project-Group-7/cs207-FinalProject.git`
+- `pip install git+https://github.com/CS207-Project-Group-7/cs207-FinalProject.git`
+
+If you are cloning our repo and installing lazydiff that way, you can run the following to install:
+
+- `python3 setup.py install`
+
+and run the following to run our tests:
+
+- `python3 setup.py test`
+
 
 ## Contributors 
 * Joe Davison
 * Raymond Lin
 * Zheng Yang
 * Matteo Zhang
-
-## License
-
-MIT License
-
-Copyright (c) 2018 CS207-Project-Group-7
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 
