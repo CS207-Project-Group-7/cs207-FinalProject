@@ -15,7 +15,7 @@ def test_cos():
     var2 = ops.cos(var1)
     var2.backward()
     assert var2.val == pytest.approx([-1, -1])
-    assert np.array([var2.grad(var1)]) == pytest.approx([0, 0])
+    assert np.array(var2.grad(var1)) == pytest.approx([0, 0])
 
 def test_tan():
     var1 = Var([0, 0])
