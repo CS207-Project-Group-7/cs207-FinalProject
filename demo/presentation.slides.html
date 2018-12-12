@@ -13242,7 +13242,7 @@ a.anchor-link {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="LazyDiff">LazyDiff<a class="anchor-link" href="#LazyDiff">&#182;</a></h1><p><strong>Team Members</strong>:</p>
+<h1 id="LazyDiff">LazyDiff<a class="anchor-link" href="#LazyDiff">&#182;</a></h1><h2 id="Project-Group-7">Project Group 7<a class="anchor-link" href="#Project-Group-7">&#182;</a></h2><p><strong>Team Members</strong>:</p>
 <p>Joe Davison</p>
 <p>Raymond Lin</p>
 <p>Zheng Yang</p>
@@ -13257,10 +13257,46 @@ a.anchor-link {
 <h1 id="What-is-Automatic-Differentiation-(AD)?">What is Automatic Differentiation (AD)?<a class="anchor-link" href="#What-is-Automatic-Differentiation-(AD)?">&#182;</a></h1><ul>
 <li>Numerically evaluate the gradient of a function</li>
 </ul>
-<p><img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/ForwardAccumulationAutomaticDifferentiation.png" alt=""></p>
 <ul>
-<li>Many uses, such as backpropagation in Neural Networks</li>
+<li>Numerical approximation is often not accurate enough and can be computationally expensive</li>
 </ul>
+<ul>
+<li>Symbolic differentiation tends to lead to inefficient code and faces the difficulty of converting a computer program into a single expression</li>
+</ul>
+
+</div>
+</div>
+</div><div class="fragment">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li>Many uses, such as backpropagation in neural networks</li>
+</ul>
+<ul>
+<li>Forward and reverse modes of gradient propogation</li>
+</ul>
+<ul>
+<li>Uses chain rule to build up gradients</li>
+</ul>
+
+</div>
+</div>
+</div></div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Forward-Mode">Forward Mode<a class="anchor-link" href="#Forward-Mode">&#182;</a></h1><p><img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/9b5370f1b8e313d47eb2a2ebac437cf88a7a1d78" alt="">
+<img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/ForwardAccumulationAutomaticDifferentiation.png" alt=""></p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Reverse-Mode">Reverse Mode<a class="anchor-link" href="#Reverse-Mode">&#182;</a></h1><p><img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/206c0444486628d70d2617e8eee8a528775e516c" alt="">
+<img src="https://upload.wikimedia.org/wikipedia/commons/a/a0/ReverseaccumulationAD.png" alt=""></p>
 
 </div>
 </div>
@@ -13269,21 +13305,33 @@ a.anchor-link {
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="LazyDiff">LazyDiff<a class="anchor-link" href="#LazyDiff">&#182;</a></h1><ul>
-<li><code>Var</code> class wrapping numpy array for scalars and vectors</li>
+<li><code>Var</code> class wrapping numpy arrays for autodiff scalars and vectors</li>
 </ul>
 <ul>
-<li>Custom operations through <code>ops</code> module</li>
+<li>Custom operations (including elementary functions) through <code>ops</code> module</li>
 </ul>
 <ul>
 <li>Supports forward and reverse mode (extension)</li>
 </ul>
+
+</div>
+</div>
+</div><div class="fragment">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <ul>
-<li>topological sort to find gradient (illustration on why topological sort is needed? actually do we even need this since we don't use grad cache anymore?)</li>
+<li>How it works<ul>
+<li><code>Var</code> objects store their parents and children, and information on how object relates to its parents and children</li>
+<li>Forward mode requires propogating derivatives to children in topological order</li>
+<li>Reverse mode requires propogating derivaties to parents in topological order</li>
+</ul>
+</li>
 </ul>
 
 </div>
 </div>
-</div></section></section><section><section>
+</div></div></section></section><section><section>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -13296,8 +13344,8 @@ a.anchor-link {
 <div class="text_cell_render border-box-sizing rendered_html">
 <ul>
 <li>Move to the desired working directory</li>
-<li>virtualenv env</li>
-<li>source env/bin/activate</li>
+<li><code>virtualenv env</code></li>
+<li><code>source env/bin/activate</code></li>
 </ul>
 
 </div>
@@ -13330,7 +13378,7 @@ a.anchor-link {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">lazydiff.vars</span> <span class="k">import</span> <span class="n">Var</span>
@@ -13378,7 +13426,7 @@ a.anchor-link {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">lazydiff</span> <span class="k">import</span> <span class="n">ops</span>
@@ -13406,7 +13454,7 @@ a.anchor-link {
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>fx values are: [2.71828183 2.71828183]
+<pre>fx values are: [ 2.71828183  2.71828183]
 </pre>
 </div>
 </div>
@@ -13494,7 +13542,7 @@ a.anchor-link {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">MSE</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
@@ -13521,10 +13569,10 @@ a.anchor-link {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">gradientDescent</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">loss_function</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lr</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">forward</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">gradient_descent</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">loss_function</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lr</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">forward</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
     <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">forward</span><span class="p">):</span>
         <span class="c1"># forward mode</span>
@@ -13534,8 +13582,8 @@ a.anchor-link {
         <span class="c1"># reverse mode</span>
         <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
     <span class="c1"># clear cache by reinstantiating</span>
-    <span class="n">m</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">val</span><span class="o">-</span><span class="n">lr</span><span class="o">*</span><span class="n">loss</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">m</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">val</span><span class="o">-</span><span class="n">lr</span><span class="o">*</span><span class="n">loss</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">b</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">val</span><span class="o">-</span><span class="n">lr</span><span class="o">*</span><span class="n">loss</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">val</span><span class="o">-</span><span class="n">lr</span><span class="o">*</span><span class="n">loss</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">loss</span>
 </pre></div>
 
@@ -13553,12 +13601,12 @@ a.anchor-link {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">iterative_regression</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">loss_function</span><span class="p">,</span> <span class="n">lr</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>\
         <span class="n">epochs</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">earlyStop</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">forward</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
-    
+
     <span class="n">loss</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
         <span class="n">prev</span> <span class="o">=</span> <span class="n">loss</span>
@@ -13579,6 +13627,7 @@ a.anchor-link {
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><img src="demo.mov" alt=""></p>
+<p>Backup Link: <a href="https://youtu.be/n5h-UVG1yYE">https://youtu.be/n5h-UVG1yYE</a></p>
 
 </div>
 </div>
@@ -13653,6 +13702,8 @@ a.anchor-link {
 </li>
 <li><p>Support for Linear, Ridge, Lasso, Elastic Net Regression</p>
 </li>
+<li><p>Adaptable to Polynomial Regression</p>
+</li>
 </ul>
 
 </div>
@@ -13660,7 +13711,7 @@ a.anchor-link {
 </div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># implementation for Ridge Regression</span>
@@ -13712,17 +13763,59 @@ Intercept: -8.881784197001252e-15
 </div>
 </div>
 
-</div></div><div class="fragment">
+</div></div></section></section><section><section>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<ul>
-<li>Supports any loss minimization problem if provided with the objective function</li>
-</ul>
+<h3 id="Polynomial-Regression">Polynomial Regression<a class="anchor-link" href="#Polynomial-Regression">&#182;</a></h3><p>Let's model $y = x^3-10x^2+3$</p>
 
 </div>
 </div>
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">PolynomialFeatures</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">y</span> <span class="o">=</span> <span class="n">X</span><span class="o">**</span><span class="mi">3</span><span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="mi">3</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">PolynomialFeatures</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">include_bias</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div></div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">seed</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">earlyStop</span> <span class="o">=</span> <span class="mf">1e-8</span>
+<span class="n">forward</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">loss</span> <span class="o">=</span> <span class="n">regression</span><span class="o">.</span><span class="n">iterative_regression</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">regression</span><span class="o">.</span><span class="n">MSE</span><span class="p">,</span> <span class="mf">0.000001</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span>
+                                                    <span class="n">earlyStop</span><span class="p">,</span> <span class="n">forward</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
 </div></div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="demo_2.mov" alt="">
+Backup Link: <a href="https://youtu.be/DF-dh6MBm8Q">https://youtu.be/DF-dh6MBm8Q</a></p>
+
+</div>
+</div>
+</div></section></section><section><section>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -13733,7 +13826,7 @@ Intercept: -8.881784197001252e-15
 <li>Support for both forward and reverse mode</li>
 </ul>
 <ul>
-<li>Linear, Lasso, Ridge, Elastic Net support</li>
+<li>Linear, Lasso, Ridge, Elastic Net, Polynomial Regression support</li>
 </ul>
 <ul>
 <li>Easy to generalize to other loss minimization problems</li>
@@ -13746,7 +13839,13 @@ Intercept: -8.881784197001252e-15
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Picture-Reference">Picture Reference<a class="anchor-link" href="#Picture-Reference">&#182;</a></h2><ul>
+<li><p><a href="https://wikimedia.org/api/rest_v1/media/math/render/svg/9b5370f1b8e313d47eb2a2ebac437cf88a7a1d78">https://wikimedia.org/api/rest_v1/media/math/render/svg/9b5370f1b8e313d47eb2a2ebac437cf88a7a1d78</a></p>
+</li>
 <li><p><a href="https://upload.wikimedia.org/wikipedia/commons/a/a4/ForwardAccumulationAutomaticDifferentiation.png">https://upload.wikimedia.org/wikipedia/commons/a/a4/ForwardAccumulationAutomaticDifferentiation.png</a></p>
+</li>
+<li><p><a href="https://wikimedia.org/api/rest_v1/media/math/render/svg/206c0444486628d70d2617e8eee8a528775e516c">https://wikimedia.org/api/rest_v1/media/math/render/svg/206c0444486628d70d2617e8eee8a528775e516c</a></p>
+</li>
+<li><p><a href="https://upload.wikimedia.org/wikipedia/commons/a/a0/ReverseaccumulationAD.png">https://upload.wikimedia.org/wikipedia/commons/a/a0/ReverseaccumulationAD.png</a></p>
 </li>
 <li><p><a href="https://timvieira.github.io/blog/images/backprop-brain-meme.png">https://timvieira.github.io/blog/images/backprop-brain-meme.png</a></p>
 </li>

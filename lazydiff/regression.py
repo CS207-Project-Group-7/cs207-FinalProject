@@ -2,8 +2,6 @@ from lazydiff.vars import Var
 from lazydiff import ops
 import numpy as np
 import time
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
 
 def MSE(X, y, m, b):
     """
@@ -89,21 +87,8 @@ def gradient_descent(X, y, loss_function, m, b, lr = 0.1, forward = True):
     b = Var(b.val-lr*loss.grad(b))
     return m, b, loss
 
-def timer(f):
-    """
-    timer decorator from CS207 lecture 4
-    """
-    def inner(*args):
-        t0 = time.time()
-        output = f(*args)
-        elapsed = time.time() - t0
-        print("Time Elapsed", elapsed)
-        return output, elapsed
-    return inner
-
-@timer
 def iterative_regression(X, y, m, b, loss_function, lr = 0.1,\
-        epochs = 100, earlyStop = 0, forward = True, plot = False):
+        epochs = 100, earlyStop = 0, forward = True, history = None):
     """
     Performs iterative regression with the given loss function
     minimizing the loss function w.r.t. the parameters
@@ -118,40 +103,29 @@ def iterative_regression(X, y, m, b, loss_function, lr = 0.1,\
     Note that 0 means no early stopping
     forward determines whether to perform forward mode
     or reverse mode to find the gradient 
-    plot determines whether or not to plot
+    history to store old values of m, b, loss 
+    if provided a dictionary
     """
+    canStore = isinstance(history, dict)
     
-    # cannot plot unless dimension of X is 1
-    canPlot = X.shape[1] == 1 and plot
-    
-    if (canPlot):
-        # plot the iterative regression 
-        # and the linear regression from sklearn as reference
-        plt.figure()
-        plt_range = np.concatenate([min(X),max(X)])
-        fig,ax = plt.subplots(1,1)
-        plt.scatter(X,y)
-        line, = plt.plot(plt_range, plt_range*m.val+b.val, color = 'black', label = 'gradient descent linear regression')
-        clf = LinearRegression().fit(X,y)
-        plt.plot(plt_range, clf.coef_*plt_range+clf.intercept_, alpha = 0.3, label = 'sklearn linear regression')
-        plt.xlabel("x value")
-        plt.ylabel("y value")
-        plt.legend()
-        fig.canvas.draw()
-        
+    if (canStore):
+        history['m'] = []
+        history['b'] = []
+        history['loss'] = []
+
     loss = Var(0)
     for ep in range(epochs):
         prev = loss
         m, b, loss = gradient_descent(X, y, loss_function, m, b, lr, forward)
+        if (canStore):
+            # store the m, b
+            # change over each epoch
+            history['m'].append(m.val)
+            history['b'].append(b.val)
+            history['loss'].append(loss.val)
+
         # check if absolute tolerance meets early stopping condition
         if (abs(loss.val - prev.val) < earlyStop):
             break
-        if (canPlot):
-            # update the plot to show 
-            # change over each epoch
-            line.set_ydata(plt_range*m.val+b.val)
-            ax.set_title("Linear Regression Update epoch = {}\nMSE={:.2E}".format(ep, float(loss.val)))
-            fig.canvas.draw()
-            plt.pause(0.5)
     # return coefficient and intercept
     return m, b, loss
