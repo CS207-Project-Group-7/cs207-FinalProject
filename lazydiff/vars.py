@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import collections
 import numbers
@@ -65,7 +64,7 @@ class Var:
                 grad = np.zeros_like(self.val)
                 for parent, factor in var.parents.items():
                     if self in parent.grad_val:
-                        grad += factor * parent.grad_val[self]
+                        grad = grad + factor * parent.grad_val[self]
                 var.grad_val[self] = grad
 
     def _backward_visit(self, var, top_sort, seen):
@@ -91,7 +90,7 @@ class Var:
                 grad = np.zeros_like(var.val)
                 for child, factor in var.children.items():
                     if child in self.grad_val:
-                        grad += factor * self.grad_val[child]
+                        grad = grad + factor * self.grad_val[child]
                 self.grad_val[var] = grad 
 
     def _check_numeric(self, other):
@@ -198,7 +197,7 @@ class Var:
         if isinstance(other, Var):
             result = Var(self.val ** other.val)
             result.parents[self] = self.children[result] = other.val * self.val ** (other.val - 1)
-            result.parents[other] = other.children[result] = math.log(self.val) * self.val ** other.val
+            result.parents[other] = other.children[result] = np.log(self.val) * self.val ** other.val
             return result
         self._check_numeric(other)
         result = Var(self.val ** other)
@@ -212,7 +211,7 @@ class Var:
         """
         self._check_numeric(other)
         result = Var(other ** self.val)
-        result.parents[self] = self.children[result] = math.log(other) * other ** self.val
+        result.parents[self] = self.children[result] = np.log(other) * other ** self.val
         return result
 
     def _in_place_error(self):
@@ -256,7 +255,7 @@ class Var:
         Performs comparison for given comparison op between Var object and another object
         """
         if isinstance(other, Var):
-            return op(self, other)
+            return op(self.val, other.val)
         return False
 
     def __eq__(self, other):
@@ -264,39 +263,39 @@ class Var:
         Checks if Var object is equal to another object. 
         If other object is Var object, returns result of numpy comparison of their values.
         """
-        self._comparison(other, np.array.__eq__)
+        return self._comparison(other, np.ndarray.__eq__)
     
     def __ne__(self, other):
         """
         Checks if Var object is not equal to another object.
         If other object is Var object, returns result of numpy comparison of their values.
         """
-        self._comparison(other, np.array.__ne__)
+        return ~(self == other)
 
     def __lt__(self, other):
         """
         Checks if Var object is less than another object.
         If other object is Var object, returns result of numpy comparison of their values.
         """
-        self._comparison(other, np.array.__lt__)
+        return self._comparison(other, np.ndarray.__lt__)
 
     def __gt__(self, other):
         """
         Checks if Var object is greater than another object.
         If other object is Var object, returns result of numpy comparison of their values.
         """
-        self._comparison(other, np.array.__gt__)
+        return self._comparison(other, np.ndarray.__gt__)
 
-    def __le_(self, other):
+    def __le__(self, other):
         """
         Checks if Var object is less than or equal to another object.
         If other object is Var object, returns result of numpy comparison of their values.
         """
-        self._comparison(other, np.array.__le__)
+        return self._comparison(other, np.ndarray.__le__)
 
     def __ge__(self, other):
         """
         Checks if Var object is greater than or equal to another object.
         If other object is Var object, returns result of numpy comparison of their values.
         """
-        self._comparison(other, np.array.__ge__)
+        return self._comparison(other, np.ndarray.__ge__)
