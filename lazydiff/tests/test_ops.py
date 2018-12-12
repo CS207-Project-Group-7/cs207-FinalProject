@@ -175,17 +175,10 @@ def test_abs():
     assert var2.grad(var1) == -1
 
 def test_composite_logexp():
-    x = Var([5, 10])
-    y = ops.log(ops.exp(x))
-    y.backward()
-    assert np.all(x == y)
-    assert np.all(y.grad(x) == 1)
-
-def test_composite_logexp():
     x = Var(5)
     y = ops.log(ops.exp(x))
     y.backward()
-    assert np.all(x == y)
+    assert np.all(x.val == pytest.approx(y.val))
     assert np.all(y.grad(x) == 1)
 
 def test_composite_trig():
