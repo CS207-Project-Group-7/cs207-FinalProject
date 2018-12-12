@@ -8,6 +8,6 @@ setup(name='lazydiff',
       author_email='mzhangyb@gmail.com, josephddavison@gmail.com, rlin@college.harvard.edu, zhengyang@g.harvard.edu',
       license='MIT',
       packages=['lazydiff'],
-      install_requires=['numpy', 'matplotlib'],
+      install_requires=['numpy'],
       setup_requires=['pytest-runner'],
       tests_require=['pytest', 'pytest-cov', 'scikit-learn'],)
