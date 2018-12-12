@@ -43,7 +43,10 @@ class Var:
 
     def _forward_visit(self, var, top_sort, seen):
         """
-        Gets topological order for visiting nodes in forward.
+        Auxiliary method for getting topological order for visiting nodes in 
+        forward. Takes in Var object var to start from, deque top_sort that will
+        hold the resulting topological order, and set seen containing previously
+        seen nodes in the course of creating the topological order.
         """
         seen.add(var)
         for child in var.children.keys():
@@ -61,7 +64,7 @@ class Var:
         self._forward_visit(self, top_sort, set())
         for var in top_sort:
             if not var is self:
-                grad = np.zeros_like(self.val)
+                grad = np.array(0.)
                 for parent, factor in var.parents.items():
                     if self in parent.grad_val:
                         grad = grad + factor * parent.grad_val[self]
@@ -69,7 +72,10 @@ class Var:
 
     def _backward_visit(self, var, top_sort, seen):
         """
-        Gets topological order for visiting nodes in backward.
+        Auxiliary method for getting topological order for visiting nodes in 
+        backward. Takes in Var object var to start from, deque top_sort that will
+        hold the resulting topological order, and set seen containing previously
+        seen nodes in the course of creating the topological order.
         """
         seen.add(var)
         for parent in var.parents.keys():
@@ -87,7 +93,7 @@ class Var:
         self._backward_visit(self, top_sort, set())
         for var in top_sort:
             if not var is self:
-                grad = np.zeros_like(var.val)
+                grad = np.array(0.) 
                 for child, factor in var.children.items():
                     if child in self.grad_val:
                         grad = grad + factor * self.grad_val[child]

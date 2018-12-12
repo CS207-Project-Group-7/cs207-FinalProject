@@ -150,7 +150,7 @@ def iterative_regression(X, y, m, b, loss_function, lr = 0.1,\
             # update the plot to show 
             # change over each epoch
             line.set_ydata(plt_range*m.val+b.val)
-            ax.set_title("Linear Regression Update epoch = {}\nMSE={:.2E}".format(ep, loss.val))
+            ax.set_title("Linear Regression Update epoch = {}\nMSE={:.2E}".format(ep, float(loss.val)))
             fig.canvas.draw()
             plt.pause(0.5)
     # return coefficient and intercept
