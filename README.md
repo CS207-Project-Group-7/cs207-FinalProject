@@ -13,11 +13,8 @@ See [Documentation](docs/Documentation.ipynb) for full documentation and current
 
 ## Installing
 
-If you want to install the package only for the current virtual environment, run the following commands to create and activate a new virtual env:
-
-- Move to the desired working directory
-- `virtualenv env`
-- `source env/bin/activate`
+The easy way using pip:
+- `pip install lazydiff`
 
 You can run the following to install the dependencies:
 - `pip install -r requirements.txt`
