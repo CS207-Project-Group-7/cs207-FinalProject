@@ -9,10 +9,11 @@ from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
 from sklearn.preprocessing import PolynomialFeatures
 
+np.random.seed(1)
+
 dim = 1
 X,y,true_coef = make_regression(n_samples = 100, n_features = dim, n_informative = dim, bias = 10, \
                                 coef = True, noise = 0, random_state=1)
-
 def test_MSE():
     m = Var(np.ones(X.shape[1]))
     b = Var(0)
@@ -109,9 +110,9 @@ def test_polynomial():
     X = PolynomialFeatures(2, include_bias = False).fit_transform(X)
     m = Var(np.random.rand(X.shape[1]), seed = 1.0)
     b = Var(0)
-    earlyStop = 1e-8
+    earlyStop = 0
     forward = False
-    m, b, loss = regression.iterative_regression(X, y, m, b, regression.MSE, 0.0001, 1000,
+    m, b, loss = regression.iterative_regression(X, y, m, b, regression.MSE, 0.0001, 10000,
                                                         earlyStop, forward)
     predict = np.sum(m.val*X, axis=1)+b.val
     assert predict == approx(y, abs=1e-2)
