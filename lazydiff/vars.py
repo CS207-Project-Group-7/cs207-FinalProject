@@ -1,355 +1,307 @@
-import math
 import numpy as np
 import collections
 import numbers
 
-def _check_scalar_sequence(args):
-    """
-    Returns a bool about whether all arguments
-    are Scalar instances
-    """
-    return np.all([isinstance(arg, Scalar) for arg in args])
+np.seterr(all='raise')
 
-def _get_scalar_sequence(args):
-    """
-    Returns a bool about whether the arguments
-    are Scalar instances or sequence of Scalar
-    """
-    if args == ():
-        raise ValueError('Cannot pass in empty argument')
-    # checks if arguments are Scalar
-    if _check_scalar_sequence(args):
-        return args
-    # checks if sequence of Scalar
-    elif len(args) == 1 and _check_scalar_sequence(args[0]):
-        return tuple(args[0])
-    else:
-        raise TypeError("Inputs need to be Scalar objects or a sequence of Scalar objects")
-
-def _in_place_error(*args):
-    """
-    Raises error for in-place operations
-    """
-    raise TypeError("In-place operations are not supported for lazydiff variables.")
-
-def ban_in_place(cls):
-    """
-    Decorator that bans in-place operations
-    """
-    for op in ['add', 'sub', 'mul', 'truediv', 'pow']:
-        setattr(cls, '__i{}__'.format(op), _in_place_error)
-    return cls
-
-@ban_in_place
-class Scalar:
+class Var:
     """
     A class for lazydiff autograd scalar variables.
     """
 
-    def __init__(self, val):
+    def __init__(self, val, seed=np.array(1.)):
         """
-        Initializes Scalar object with numerical value val.
+        Initializes Var object with numerical value val.
         """
-        self.val = val
-        self._grad_cache = {self: 1}
-        self.parents = []
+        self.val = np.array(val, dtype='float')
+        self.grad_val = {self: seed}
+        self.parents = {}
+        self.children = {}
+
+    def __repr__(self):
+        """
+        Returns string representation of Var object
+        """
+        return 'Var({}, seed={})'.format(repr(self.val.tolist()), repr(self.grad_val[self].tolist()))
+
+    def __hash__(self):
+        """
+        Computes hash of Var object
+        """
+        return id(self)
+
+    def grad(self, var):
+        """
+        Returns numpy array representing gradient with respect to variable var.
+        Raises error if self does not depend on variable var.
+        """
+        if not isinstance(var, Var):
+            raise TypeError('Inputs needs to be Var object.')
+        if var not in self.grad_val:
+            raise ValueError('Variable does not depend on input var. Make sure you have run forward/backward.')
+        return self.grad_val[var]
+
+    def _forward_visit(self, var, top_sort, seen):
+        """
+        Auxiliary method for getting topological order for visiting nodes in 
+        forward. Takes in Var object var to start from, deque top_sort that will
+        hold the resulting topological order, and set seen containing previously
+        seen nodes in the course of creating the topological order.
+        """
+        seen.add(var)
+        for child in var.children.keys():
+            if child not in seen:
+                self._forward_visit(child, top_sort, seen)
+        top_sort.appendleft(var)
     
-    def grad(self, *args):
+    def forward(self):
         """
-        Returns tuple representing gradient with respect to each variable
-        provided as arguments.
+        Propagates gradients forward from this variable.
+        Before making any call var.grad(self), where var is a variable that
+        depends on self, either need to run self.forward() or var.backward().
         """
-        args = _get_scalar_sequence(args) 
-        result = np.zeros(len(args))
-        for i, var in enumerate(args):
-            self._compute_grad(var)
-            result[i] = self._grad_cache[var]
-        return result
-    
-    def _compute_grad(self, var):
+        top_sort = collections.deque()
+        self._forward_visit(self, top_sort, set())
+        for var in top_sort:
+            if not var is self:
+                grad = np.array(0.)
+                for parent, factor in var.parents.items():
+                    if self in parent.grad_val:
+                        grad = grad + factor * parent.grad_val[self]
+                var.grad_val[self] = grad
+
+    def _backward_visit(self, var, top_sort, seen):
         """
-        Internal method for computing gradient with respect to variable var
-        and storing the result in the gradient cache dictionary.
+        Auxiliary method for getting topological order for visiting nodes in 
+        backward. Takes in Var object var to start from, deque top_sort that will
+        hold the resulting topological order, and set seen containing previously
+        seen nodes in the course of creating the topological order.
         """
-        if var not in self._grad_cache:
-            grad = 0
-            for val, parent_var in self.parents:
-                parent_var._compute_grad(var)
-                grad += val * parent_var._grad_cache[var]
-            self._grad_cache[var] = grad
+        seen.add(var)
+        for parent in var.parents.keys():
+            if parent not in seen:
+                self._backward_visit(parent, top_sort, seen)
+        top_sort.appendleft(var)
+
+    def backward(self):
+        """
+        Propagates gradients backward from this variable.
+        Before making any call self.grad(var), where var is a variable on which
+        self depends, either need to run self.backward() or var.forward().
+        """
+        top_sort = collections.deque()
+        self._backward_visit(self, top_sort, set())
+        for var in top_sort:
+            if not var is self:
+                grad = np.array(0.) 
+                for child, factor in var.children.items():
+                    if child in self.grad_val:
+                        grad = grad + factor * self.grad_val[child]
+                self.grad_val[var] = grad 
+
+    def _check_numeric(self, other):
+        """
+        Checks if given object is of numeric type or is a numpy array of numeric types
+        """
+        if not isinstance(other, numbers.Number) and not (isinstance(other, np.ndarray) 
+            and np.issubdtype(other.dtype, np.number)):
+            raise TypeError("Input needs to be numeric value, numpy array of numeric values, or Var object")
 
     def __neg__(self):
         """
-        Returns Scalar object representing negation of a Scalar object.
+        Returns Var object representing negation of a Var object.
         """
-        result = Scalar(-self.val)
-        result.parents.append((-1., self))
+        result = Var(-self.val)
+        result.parents[self] = self.children[result] = -1.
         return result
 
     def __abs__(self):
         """
-        Returns Scalar object representing absolute value of a Scalar object.
+        Returns Var object representing absolute value of a Var object.
         """
-        result = Scalar(abs(self.val))
-        result.parents.append((self.val / abs(self.val), self))
+        result = Var(abs(self.val))
+        result.parents[self] = self.children[result] = self.val / abs(self.val)
         return result
 
     def __add__(self, other):
         """
-        Returns Scalar object representing addition of two Scalar objects or
-        the addition of a Scalar object and a Python number.
+        Returns Var object representing addition of two Var objects or
+        the addition of a Var object and a Python number.
         """
-        if isinstance(other, Scalar):
-            result = Scalar(self.val + other.val)
-            result.parents.append((1., self))
-            result.parents.append((1., other))
+        if isinstance(other, Var):
+            result = Var(self.val + other.val)
+            result.parents[self] = self.children[result] = 1.
+            result.parents[other] = other.children[result] = 1.
             return result
-        elif isinstance(other, numbers.Number):
-            result = Scalar(self.val + other)
-            result.parents.append((1., self))
-            return result
-        else:
-            raise TypeError("Input needs to be a numeric value or Vector object")
+        self._check_numeric(other)
+        result = Var(self.val + other)
+        result.parents[self] = self.children[result] = 1.
+        return result
 
     def __radd__(self, other):
         """
-        Returns Scalar object representing right addition of a Scalar object
+        Returns Var object representing right addition of a Var object
         with a Python number.
         """
         return self + other
 
     def __sub__(self, other):
         """
-        Returns Scalar object representing subtraction of two Scalar objects or
-        the subtraction of a Scalar object and a Python number
+        Returns Var object representing subtraction of two Var objects or
+        the subtraction of a Var object and a Python number
         """
         return self + (-other)
 
     def __rsub__(self, other):
         """
-        Returns Scalar object representing right subtraction of a Scalar object
+        Returns Var object representing right subtraction of a Var object
         with a Python number
         """
         return -self + other
 
     def __mul__(self, other):
         """
-        Returns Scalar object representing multiplication of two Scalar objects 
-        or the multiplication of a Scalar object and a Python number
+        Returns Var object representing multiplication of two Var objects 
+        or the multiplication of a Var object and a Python number
         """
-        if isinstance(other, Scalar):
-            result = Scalar(self.val * other.val)
-            result.parents.append((other.val, self))
-            result.parents.append((self.val, other))
+        if isinstance(other, Var):
+            result = Var(self.val * other.val)
+            result.parents[self] = self.children[result] = other.val
+            result.parents[other] = other.children[result] = self.val
             return result
-        elif isinstance(other, numbers.Number):
-            result = Scalar(other * self.val)
-            result.parents.append((other, self))
-            return result
-        else:
-            raise TypeError("Input needs to be a numeric value or Vector object")
+        self._check_numeric(other)
+        result = Var(other * self.val)
+        result.parents[self] = self.children[result] = other
+        return result
     
     def __rmul__(self, other):
         """
-        Returns Scalar object representing right multiplication of a Scalar 
+        Returns Var object representing right multiplication of a Var 
         object with a Python number
         """
         return self * other
 
     def __truediv__(self, other):
         """
-        Returns Scalar object representing division of two Scalar objects or 
-        the division of a Scalar object and a Python number
+        Returns Var object representing division of two Var objects or 
+        the division of a Var object and a Python number
         """
         return self * (other ** -1)
 
     def __rtruediv__(self, other):
         """
-        Returns Scalar object representing right division of a Scalar object
+        Returns Var object representing right division of a Var object
         with a Python number
         """
         return (self ** -1) * other
 
     def __pow__(self, other):
         """
-        Returns Scalar object representing exponentiation of two Scalar objects 
-        or the exponentiation of a Scalar object and a Python number
+        Returns Var object representing exponentiation of two Var objects 
+        or the exponentiation of a Var object and a Python number
         """
-        if isinstance(other, Scalar):
-            result = Scalar(self.val ** other.val)
-            result.parents.append((other.val * self.val ** (other.val - 1), self))
-            result.parents.append((math.log(self.val) * self.val ** other.val, other))
+        if isinstance(other, Var):
+            result = Var(self.val ** other.val)
+            result.parents[self] = self.children[result] = other.val * self.val ** (other.val - 1)
+            result.parents[other] = other.children[result] = np.log(self.val) * self.val ** other.val
             return result
-        elif isinstance(other, numbers.Number):
-            result = Scalar(self.val ** other)
-            result.parents.append((other * self.val ** (other - 1), self))
-            return result
-        else:
-            raise TypeError("Input needs to be a numeric value or Vector object")
-
-    def __rpow__(self, other):
-        """
-        Returns Scalar object representing right exponentiation of a Scalar 
-        object with a Python number
-        """
-        result = Scalar(other ** self.val)
-        result.parents.append((math.log(other) * other ** self.val, self))
+        self._check_numeric(other)
+        result = Var(self.val ** other)
+        result.parents[self] = self.children[result] = other * self.val ** (other - 1)
         return result
 
-@ban_in_place
-class Vector:
-    """
-    A class for lazydiff autograd vector variables.
-    """
-
-    def __init__(self, *args):
-        """
-        Initializes Scalar object with arguments of Scalar objects
-        or a sequence of Scalar objects args
-        """
-        self._components = _get_scalar_sequence(args) 
-        self.val = tuple([component.val for component in self._components])
-
-    def grad(self, *args):
-        """
-        Returns numpy array representing Jacobian
-        with respect to each variable provided as arguments args
-        """
-        return np.array([component.grad(*args) for component in self._components])      
-
-    def __getitem__(self, ind):
-        """
-        Returns a Scalar object in the given index
-        """
-        if ind not in range(len(self)):
-            raise IndexError
-        return self._components[ind]
-
-    def __len__(self):
-        """
-        Returns the number of Scalar objects the vector holds
-        """
-        return len(self._components)
-
-    def _check_broadcast(self, other):
-        """
-        Returns a bool about whether operands are of matching length
-        """
-        if (len(self) != len(other)):
-            raise ValueError("Operands could not be broadcast together with lengths {} and {}".format(len(self),len(other)))
-
-    def _unop_wrapper(self, op):
-        """
-        Returns a Vector instance unwrapping unitary operation
-        """
-        return Vector([op(component) for component in self._components])
-
-    def _binop_wrapper(self, other, op):
-        """
-        Returns a Vector instance unwrapping binary operation
-        """
-        if isinstance(other, numbers.Number) or isinstance(other, Scalar):
-            return Vector([op(component, other) for component in self._components])
-        elif isinstance(other, Vector):
-            self._check_broadcast(other)
-            return Vector([op(comp1, comp2) for comp1, comp2 in zip(self._components, other._components)])
-        else:
-            raise TypeError("Input needs to be a numeric value, Scalar object, or Vector object")
-
-    def _rop_wrapper(self, other, op):
-        """
-        Returns a Vector instance unwrapping reverse binary operations
-        """
-        return Vector([op(component, other) for component in self._components])
-
-    def __neg__(self):
-        """
-        Returns a Vector instance with the negation of the elements
-        """
-        return self._unop_wrapper(Scalar.__neg__)
-
-    def __abs__(self):
-        """
-        Returns a Vector instance with the absolute of the elements
-        """
-        return self._unop_wrapper(Scalar.__abs__)
-    
-    def __add__(self, other):
-        """
-        Returns a Vector instance representing addition of 
-        two Vector instances or the addition of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._binop_wrapper(other, Scalar.__add__)
-
-    def __radd__(self, other):
-        """
-        Returns a Vector instance representing right addition of 
-        two Vector instances or the right addition of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._rop_wrapper(other, Scalar.__radd__)
-
-    def __sub__(self, other):
-        """
-        Returns a Vector instance representing subtraction of 
-        two Vector instances or the subtraction of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._binop_wrapper(other, Scalar.__sub__)
-
-    def __rsub__(self, other):
-        """
-        Returns a Vector instance representing right subtraction of 
-        two Vector instances or the right subtraction of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._rop_wrapper(other, Scalar.__rsub__)
-
-    def __mul__(self, other):
-        """
-        Returns a Vector instance representing multiplication of 
-        two Vector instances or the multiplication of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._binop_wrapper(other, Scalar.__mul__)
-    
-    def __rmul__(self, other):
-        """
-        Returns a Vector instance representing right multiplication of 
-        two Vector instances or the right multiplication of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._rop_wrapper(other, Scalar.__rmul__)
-
-    def __truediv__(self, other):
-        """
-        Returns a Vector instance representing division of 
-        two Vector instances or the division of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._binop_wrapper(other, Scalar.__truediv__)
-
-    def __rtruediv__(self, other):
-        """
-        Returns a Vector instance representing right division of 
-        two Vector instances or the right division of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._rop_wrapper(other, Scalar.__rtruediv__)
-
-    def __pow__(self, other):
-        """
-        Returns Vector instance representing exponentiation of 
-        twi Vector instances or the exponentiation of a Scalar instance
-        and a number by broadcasting
-        """
-        return self._binop_wrapper(other, Scalar.__pow__)
-
     def __rpow__(self, other):
         """
-        Returns Vector instance representing right exponentiation of 
-        twi Vector instances or the right exponentiation of a Scalar instance
-        and a number by broadcasting
+        Returns Var object representing right exponentiation of a Var 
+        object with a Python number
         """
-        return self._rop_wrapper(other, Scalar.__rpow__)
+        self._check_numeric(other)
+        result = Var(other ** self.val)
+        result.parents[self] = self.children[result] = np.log(other) * other ** self.val
+        return result
+
+    def _in_place_error(self):
+        """
+        Raises error for in-place operations
+        """
+        raise TypeError("In-place operations are not supported for lazydiff variables.")
+
+    def __iadd__(self, other):
+        """
+        Ban in-place addition for Var objects
+        """
+        self._in_place_error()
+
+    def __isub__(self, other):
+        """
+        Ban in-place subtraction for Var objects.
+        """
+        self._in_place_error()
+
+    def __imul__(self, other):
+        """
+        Ban in-place multiplication for Var objects.
+        """
+        self._in_place_error()
+
+    def __itruediv__(self, other):
+        """
+        Ban in-place division for Var objects.
+        """
+        self._in_place_error()
+
+    def __ipow__(self, other):
+        """
+        Ban in-place exponentiation for Var objects.
+        """
+        self._in_place_error()
+
+    def _comparison(self, other, op):
+        """
+        Performs comparison for given comparison op between Var object and another object
+        """
+        if isinstance(other, Var):
+            return op(self.val, other.val)
+        return False
+
+    def __eq__(self, other):
+        """
+        Checks if Var object is equal to another object. 
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        return self._comparison(other, np.ndarray.__eq__)
+    
+    def __ne__(self, other):
+        """
+        Checks if Var object is not equal to another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        return ~(self == other)
+
+    def __lt__(self, other):
+        """
+        Checks if Var object is less than another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        return self._comparison(other, np.ndarray.__lt__)
+
+    def __gt__(self, other):
+        """
+        Checks if Var object is greater than another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        return self._comparison(other, np.ndarray.__gt__)
+
+    def __le__(self, other):
+        """
+        Checks if Var object is less than or equal to another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        return self._comparison(other, np.ndarray.__le__)
+
+    def __ge__(self, other):
+        """
+        Checks if Var object is greater than or equal to another object.
+        If other object is Var object, returns result of numpy comparison of their values.
+        """
+        return self._comparison(other, np.ndarray.__ge__)

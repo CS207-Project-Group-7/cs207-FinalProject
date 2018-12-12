@@ -9,7 +9,7 @@
 
 ## Full Documentation
 
-See [Milestone 2](docs/milestone2.ipynb) for full documentation and current progress.
+See [Documentation](docs/Documentation.ipynb) for full documentation and current progress.
 
 ## Installing
 
